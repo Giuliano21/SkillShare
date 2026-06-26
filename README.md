@@ -1,254 +1,535 @@
-🎓 SkillShare — Piattaforma di Tutoring Universitario
+# Progetto piattaforma tutor-studente
 
-Un'applicazione web Full-Stack progettata per connettere studenti universitari e tutor. Gli utenti possono cercare tutor in base a materia, prezzo e disponibilità, prenotare sessioni, scambiarsi messaggi in tempo reale e lasciare recensioni. Il progetto è sviluppato come Single Page Application (SPA) e rispetta i requisiti del corso di Fondamenti del Web.
+## Descrizione del progetto
 
-📑 Indice
+Il progetto consiste nella realizzazione di una piattaforma web che permetta a studenti e tutor di trovarsi in modo semplice ed efficace. L'obiettivo principale è offrire agli studenti uno strumento per cercare insegnanti filtrandoli per materia, prezzo e altri criteri utili, consentire ai tutor di proporsi agli studenti attraverso un profilo pubblico e permettere ai due attori di interagire tramite chat e prenotazione di lezioni.[1]
 
-Concetti Teorici e Architettura
+Dal punto di vista tecnico, l'applicazione deve essere sviluppata come **Single Page Application** con client-side rendering, con un frontend in React, un backend in Node.js + Express e un database MongoDB in cloud. La pratica del corso suggerisce inoltre di prevedere API autenticate, login lato frontend e, per interazioni real-time come la chat, l'uso di Socket.IO.[1]
 
-Stack Tecnologico
+## Obiettivi del progetto
 
-Struttura del Progetto
+La piattaforma deve soddisfare questi obiettivi principali:
 
-Modello Dati (MongoDB)
+- Permettere la registrazione e il login degli utenti.[1]
+- Distinguere tra utente studente e utente tutor tramite ruoli applicativi.[1]
+- Consentire la ricerca dei tutor tramite filtri.
+- Mostrare schede tutor con informazioni utili alla scelta.
+- Consentire a uno studente autenticato di aprire una chat privata con un tutor.[1]
+- Consentire allo studente di prenotare una lezione scegliendo uno slot libero del tutor.
+- Consentire allo studente di lasciare una recensione dopo l'esperienza con il tutor.
+- Consentire al tutor di gestire disponibilità, accettare o disdire prenotazioni.
+- Consentire all'utente di effettuare logout ed eliminare il proprio account.
 
-Prerequisiti
+## Funzionalità principali
 
-Configurazione Variabili d'Ambiente
+### 1. Home page
 
-Setup Backend (Sviluppo Locale)
+La home page rappresenta il punto di accesso principale alla piattaforma e deve contenere gli elementi chiave dell'esperienza iniziale dell'utente.
 
-Setup Frontend (Sviluppo Locale)
+Componenti previsti:
 
-Deployment Locale con Docker e Docker Compose
+- Navbar con logo del sito.
+- Barra di ricerca tutor.
+- Bottone di login.
+- Bottone “Diventa tutor”.
+- Sezione principale con carosello di tutor in evidenza.
 
-Documentazione e API
+### 2. Card tutor
 
-📚 1. Concetti Teorici e Architettura
+Ogni tutor mostrato nella home o nella pagina risultati deve essere rappresentato tramite una card contenente:
 
-Benvenuto nel team! Per iniziare con il piede giusto, ecco una panoramica di come è pensata l'applicazione SkillShare. Il progetto è diviso in due macro-aree (Frontend e Backend) che comunicano tra loro tramite rete.
+- Nome e cognome.
+- Numero di stelle o valutazione media.
+- Numero di recensioni.
+- Breve descrizione personale.
+- Prezzo orario.
+- Eventuale materia principale insegnata.
+- Pulsante per visualizzare il profilo.
+- Pulsante per avviare la chat.
+- Pulsante per prenotare una lezione.
 
-1.1 Architettura Client-Server (SPA)
+### 3. Registrazione e login
 
-Client (Frontend): Realizzato in React. È una Single Page Application (SPA). Questo significa che il browser carica un'unica pagina HTML iniziale e la navigazione tra le schermate (ricerca, profilo tutor, chat) avviene in modo dinamico tramite JavaScript (React Router), senza ricaricare la pagina. Questo garantisce un'esperienza utente fluida e reattiva.
+La piattaforma deve prevedere un sistema di autenticazione sicura. La pratica consente l'uso di password con hashing, Passport, OAuth o altri meccanismi, oltre a sessioni basate su cookie o JWT.[1]
 
-Server (Backend): Realizzato in Node.js con Express. Espone delle API RESTful. Il suo compito è ricevere le richieste dal client, validarle, interrogare il database, applicare la logica di business (es. controllare se uno slot orario è già occupato) e restituire i dati in formato JSON.
+La soluzione consigliata per questo progetto è:
 
-1.2 Autenticazione e Sicurezza
+- Registrazione unica dell'account.
+- Login unico per tutti gli utenti.
+- Possibilità, in fase di registrazione oppure successivamente, di diventare tutor.
+- Profilo tutor separato dai dati generali dell'utente.
 
-Utilizziamo JSON Web Token (JWT). Quando un utente fa il login, il server genera un token firmato che il client salva (es. nel Local Storage o nei Cookie). Ogni richiesta successiva alle API protette includerà questo token nell'header Authorization, permettendo al server di identificare l'utente senza mantenere lo stato della sessione in memoria.
+Questo approccio evita duplicazioni di codice e rende più pulita la gestione dei ruoli applicativi.
 
-1.3 Comunicazione Real-Time
+### 4. Profilo tutor
 
-Per la funzionalità di chat tra studente e tutor, HTTP tradizionale (richiesta-risposta) non è sufficiente. Utilizziamo WebSockets (tramite la libreria Socket.IO) per mantenere un canale bidirezionale sempre aperto, permettendo l'invio e la ricezione di messaggi in tempo reale.
+Un utente autenticato può completare il proprio profilo tutor inserendo:
 
-🛠️ 2. Stack Tecnologico
+- Materie insegnate.
+- Prezzo orario.
+- Breve biografia.
+- Livello di istruzione o qualifiche.
+- Disponibilità settimanale.
+- Slot di orari liberi prenotabili.
+- Eventuale modalità di lezione (online, in presenza, entrambe).
 
-Il progetto è basato sullo stack MERN (MongoDB, Express, React, Node.js).
+Il tutor deve anche avere un'area personale in cui:
 
-Frontend:
+- Visualizzare le proprie prenotazioni.
+- Accettare una prenotazione.
+- Disdire una prenotazione.
+- Aggiornare i propri orari disponibili.
 
-Libreria UI: React (con Vite per un build e un server di sviluppo ultra-veloci)
+### 5. Ricerca e filtri
 
-Routing: React Router DOM
+Gli studenti devono poter cercare tutor per:
 
-Gestione Stato: React Context API / Custom Hooks
+- Materia.
+- Prezzo minimo/massimo.
+- Modalità della lezione.
+- Valutazione media.
+- Disponibilità.
 
-Stili: CSS puro / TailwindCSS (per un design responsivo e moderno)
+La barra di ricerca nella navbar può servire per una ricerca rapida, mentre una pagina dedicata ai tutor può includere filtri più completi.
 
-Real-time: socket.io-client
+### 6. Chat privata studente-tutor
 
-Backend:
+La chat deve essere disponibile solo agli utenti autenticati. Poiché la pratica suggerisce di usare tecnologie real-time per casi come chat e aggiornamenti in tempo reale, Socket.IO è una scelta coerente e consigliata.[1]
 
-Runtime & Framework: Node.js + Express.js
+Funzionalità minime della chat:
 
-Database & ODM: MongoDB + Mongoose (per la modellazione dei dati)
+- Apertura conversazione tra studente e tutor.
+- Invio e ricezione messaggi in tempo reale.[1]
+- Visualizzazione dello storico messaggi.
+- Accesso consentito solo agli utenti loggati.
 
-Autenticazione: jsonwebtoken (JWT) e bcryptjs (per l'hashing delle password)
+### 7. Prenotazione lezioni
 
-Real-time: socket.io
+Lo studente autenticato deve poter prenotare una lezione con un tutor scegliendo uno slot libero tra quelli messi a disposizione dal tutor.
 
-📂 3. Struttura del Progetto
+Funzionalità previste:
 
-Il repository è organizzato come un "monorepo" contenente due cartelle principali (frontend e backend) e una cartella per la documentazione, affiancate dai file di orchestrazione Docker.
+- Visualizzazione calendario o elenco slot disponibili del tutor.
+- Prenotazione di uno slot libero.
+- Stato della prenotazione: `pending`, `accepted`, `cancelled`, `completed`.
+- Visualizzazione prenotazioni future e passate nell'area utente.
 
-skillshare/
-├── backend/                  # Logica server e API (Node.js/Express)
+Lato tutor, devono essere previste le operazioni di:
+
+- Accettazione prenotazione.
+- Disdetta prenotazione.
+- Gestione disponibilità settimanali o giornaliere.
+- Blocco degli slot già prenotati per evitare doppie prenotazioni.
+
+### 8. Recensioni
+
+Lo studente deve poter scrivere una recensione per un tutor. La recensione può essere collegata a una lezione prenotata o completata, così da rendere il sistema più realistico e impedire recensioni arbitrarie.
+
+Ogni recensione deve includere:
+
+- Numero di stelle.
+- Testo recensione.
+- Data.
+- Studente autore.
+- Tutor destinatario.
+
+Il sistema deve aggiornare anche:
+
+- Media valutazioni del tutor.
+- Numero totale recensioni mostrate nelle card e nel profilo.
+
+### 9. Profilo utente
+
+Ogni utente deve avere una sezione profilo in cui può:
+
+- Visualizzare i propri dati.
+- Modificare alcune informazioni personali.
+- Effettuare il logout.
+- Eliminare il proprio account.
+
+L'eliminazione account deve essere protetta da conferma esplicita, perché comporta la rimozione o disattivazione del profilo e delle funzionalità associate.
+
+## Architettura del progetto
+
+L'architettura deve rispettare i vincoli della pratica, che richiede un progetto organizzato con due sottocartelle principali: `frontend` e `backend`, da consegnare separatamente e senza `node_modules`.[1]
+
+### Frontend
+
+Il frontend deve essere realizzato con React, come richiesto esplicitamente dalla pratica. Per la navigazione tra le viste della SPA è opportuno usare React Router, mentre per gestire lo stato globale dell'autenticazione è utile usare Context API o hook custom, entrambe soluzioni coerenti con i suggerimenti del corso.[1]
+
+Tecnologie consigliate lato frontend:
+
+- React.
+- React Router.[1]
+- Context API.[1]
+- Axios oppure Fetch per chiamare le API backend.[1]
+- Material UI oppure CSS personalizzato per i componenti grafici.[1]
+- Socket.IO client per la chat real-time.[1]
+
+Se vuoi gestire bene la parte prenotazioni, può essere utile integrare un componente calendario nel frontend, oppure iniziare con una lista di slot orari semplificata.
+
+### Backend
+
+Il backend deve essere sviluppato con Node.js ed Express, in linea con i requisiti tecnici della pratica. Dovrà esporre API REST per autenticazione, gestione utenti, tutor, recensioni, disponibilità, prenotazioni e conversazioni.[1]
+
+Tecnologie consigliate lato backend:
+
+- Node.js.
+- Express.[1]
+- MongoDB Atlas per il database cloud.[1]
+- Mongoose per la modellazione dei dati.
+- bcrypt per hashing password.
+- JWT oppure cookie di sessione per l'autenticazione.[1]
+- Socket.IO per la chat real-time.[1]
+- Swagger per documentare le API, come suggerito dalla pratica.[1]
+
+## Modello dati suggerito
+
+### Collezione `users`
+
+Contiene i dati comuni a tutti gli utenti:
+
+- `name`
+- `surname`
+- `email`
+- `passwordHash`
+- `role`
+- `createdAt`
+- `updatedAt`
+- `isDeleted` oppure `status`
+
+### Collezione `tutorProfiles`
+
+Contiene le informazioni aggiuntive dei tutor:
+
+- `userId`
+- `subjects`
+- `hourlyPrice`
+- `bio`
+- `education`
+- `availabilityRules`
+- `lessonMode`
+- `ratingAverage`
+- `reviewsCount`
+
+### Collezione `availabilitySlots`
+
+Contiene gli slot prenotabili dei tutor:
+
+- `tutorId`
+- `startDateTime`
+- `endDateTime`
+- `isBooked`
+- `createdAt`
+
+### Collezione `bookings`
+
+Contiene le prenotazioni delle lezioni:
+
+- `studentId`
+- `tutorId`
+- `slotId`
+- `status`
+- `subject`
+- `notes`
+- `createdAt`
+- `updatedAt`
+
+### Collezione `reviews`
+
+Contiene le recensioni lasciate dagli studenti:
+
+- `studentId`
+- `tutorId`
+- `bookingId`
+- `rating`
+- `comment`
+- `createdAt`
+
+### Collezione `conversations`
+
+Contiene le conversazioni tra utenti:
+
+- `participants`
+- `createdAt`
+- `updatedAt`
+
+### Collezione `messages`
+
+Contiene i singoli messaggi della chat:
+
+- `conversationId`
+- `senderId`
+- `text`
+- `timestamp`
+- `isRead`
+
+## Struttura consigliata delle cartelle
+
+```text
+project-root/
+├── frontend/
+│   ├── public/
 │   ├── src/
-│   │   ├── config/           # Configurazioni (es. db.js per connessione a Mongo)
-│   │   ├── controllers/      # Logica di business per ogni rotta (es. authController.js)
-│   │   ├── middlewares/      # Middleware Express (es. authMiddleware.js per validare JWT)
-│   │   ├── models/           # Schemi Mongoose (User, Session, Message)
-│   │   ├── routes/           # Definizione degli endpoint REST (es. userRoutes.js)
-│   │   ├── sockets/          # Gestori degli eventi Socket.IO per la chat
-│   │   └── utils/            # Funzioni helper (es. validazione input, calcolo slot)
-│   ├── .dockerignore         # File per escludere file non necessari alla build di Docker
-│   ├── .env.example          # Template delle variabili d'ambiente
-│   ├── Dockerfile            # Configurazione per containerizzare il backend
+│   │   ├── assets/
+│   │   ├── components/
+│   │   │   ├── auth/
+│   │   │   ├── tutor/
+│   │   │   ├── booking/
+│   │   │   ├── review/
+│   │   │   ├── chat/
+│   │   │   └── profile/
+│   │   ├── pages/
+│   │   ├── context/
+│   │   ├── hooks/
+│   │   ├── services/
+│   │   ├── socket/
+│   │   ├── styles/
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── router.jsx
 │   ├── package.json
-│   └── server.js             # Entry point del server backend
-│
-├── frontend/                 # Client React (Vite)
+│   └── .env
+├── backend/
 │   ├── src/
-│   │   ├── assets/           # Immagini, icone, font
-│   │   ├── components/       # Componenti riutilizzabili (Navbar, Button, TutorCard, Modal)
-│   │   ├── context/          # React Context (es. AuthContext, ChatContext)
-│   │   ├── hooks/            # Custom hooks (es. useFetch, useAuth)
-│   │   ├── pages/            # Componenti pagina (Home, Login, Search, TutorProfile, AdminDashboard)
-│   │   ├── services/         # Chiamate API con fetch/axios (es. api.js)
-│   │   ├── App.jsx           # Componente root e configurazione Router
-│   │   └── main.jsx          # Entry point di React
-│   ├── .dockerignore         # File per escludere file non necessari alla build del frontend
-│   ├── Dockerfile            # Configurazione multi-stage per React + Nginx
-│   ├── index.html            # File HTML principale
-│   ├── nginx.conf            # Configurazione Nginx per gestire il routing SPA
+│   │   ├── config/
+│   │   ├── models/
+│   │   ├── controllers/
+│   │   ├── routes/
+│   │   ├── middleware/
+│   │   ├── services/
+│   │   ├── validators/
+│   │   ├── sockets/
+│   │   ├── docs/
+│   │   ├── app.js
+│   │   └── server.js
 │   ├── package.json
-│   └── vite.config.js
-│
-├── docs/                     # Documentazione del progetto (Fondamenti Web)
-│   ├── UML/                  # Diagrammi di sequenza e casi d'uso
-│   ├── API_DOCS.md           # Documentazione degli endpoint REST
-│   └── DataModel.md          # Diagramma E-R e specifiche MongoDB
-│
-├── docker-compose.yml        # File di orchestrazione per comporre i container dell'app
-└── README.md                 # Questo file
+│   └── .env
+└── docs/
+    ├── scenario-applicativo.md
+    ├── architettura-applicazione.md
+    ├── modello-dati.md
+    └── use-case-uml.png
+```
 
+Questa struttura è coerente con la consegna, che richiede esplicitamente una cartella di backend e una di frontend e una documentazione tecnica del progetto comprensiva di modello dati e documentazione API.[1]
 
-🗄️ 4. Modello Dati (MongoDB)
+## Come realizzarlo nel codice
 
-Una panoramica rapida delle collezioni principali che gestiremo in Mongoose:
+## 1. Avvio del frontend
 
-User: Gestisce studenti, tutor e admin.
+Nel frontend si crea un progetto React con pagine e componenti separati. Le rotte principali possono essere:
 
-Campi base: nome, email, password_hash, ruoli (Array: può essere ['student'], ['student', 'tutor'], o ['admin']).
+- `/` home page.
+- `/login` pagina di login.
+- `/register` pagina di registrazione.
+- `/tutors` elenco tutor.
+- `/tutors/:id` profilo tutor.
+- `/become-tutor` completamento profilo tutor.
+- `/chat` area chat protetta.
+- `/bookings` area prenotazioni.
+- `/profile` profilo utente.
 
-Campi tutor (popolati solo se ruolo include 'tutor'): materie (array di stringhe), tariffa_oraria, modalita (presenza/remoto), valutazione_media.
+Esempio di logica router:
 
-Booking (Prenotazione): Collega uno studente a un tutor.
+```jsx
+<Routes>
+  <Route path="/" element={<HomePage />} />
+  <Route path="/login" element={<LoginPage />} />
+  <Route path="/register" element={<RegisterPage />} />
+  <Route path="/tutors" element={<TutorsPage />} />
+  <Route path="/tutors/:id" element={<TutorProfilePage />} />
+  <Route path="/become-tutor" element={<ProtectedRoute><BecomeTutorPage /></ProtectedRoute>} />
+  <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+  <Route path="/bookings" element={<ProtectedRoute><BookingsPage /></ProtectedRoute>} />
+  <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+</Routes>
+```
 
-Campi: studentId (ref User), tutorId (ref User), data_ora_inizio, data_ora_fine, stato (in attesa, confermata, completata, annullata), prezzo_totale.
+## 2. Gestione autenticazione
 
-Review (Recensione): Lasciata dallo studente dopo una sessione.
+L'autenticazione può essere realizzata con backend Express e JWT. Il frontend invia email e password all'API, riceve un token e salva lo stato utente nel contesto applicativo. La pratica consente esplicitamente autenticazione con hashing password e sessioni via JWT o cookie.[1]
 
-Campi: tutorId, studentId, voto (1-5), commento, data.
+Flusso suggerito:
 
-Message (Messaggio): Per la chat.
+1. L'utente compila il form di registrazione.
+2. Il backend valida i dati.
+3. La password viene hashata con bcrypt.
+4. L'utente viene salvato in MongoDB.
+5. Al login, il backend verifica credenziali e restituisce un token.
+6. Il frontend usa il token per accedere alle route protette e alle API autenticate.[1]
+7. Al logout il token viene rimosso lato client oppure invalidato lato server, a seconda della strategia scelta.
+8. In caso di eliminazione account, il backend deve verificare identità e autorizzazione prima di cancellare o disattivare il profilo.
 
-Campi: mittenteId, destinatarioId, testo, timestamp, letto (booleano).
+## 3. API backend principali
 
-Report (Segnalazione): Per l'area admin.
+API minime consigliate:
 
-Campi: segnalatoreId, segnalatoId, motivo, stato (aperto, risolto).
+### Auth
 
-⚙️ 5. Prerequisiti
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `DELETE /api/auth/account`
 
-Assicurati di aver installato sulla tua macchina:
+### Tutor
 
-Node.js (versione 18 o superiore raccomandata, solo se intendi sviluppare senza Docker)
+- `GET /api/tutors`
+- `GET /api/tutors/:id`
+- `POST /api/tutors/profile`
+- `PUT /api/tutors/profile`
+- `GET /api/tutors/:id/availability`
+- `POST /api/tutors/availability`
+- `PUT /api/tutors/availability/:slotId`
+- `DELETE /api/tutors/availability/:slotId`
 
-MongoDB (solo se sviluppi localmente senza Docker)
+### Bookings
 
-Docker Desktop (necessario per avviare l'applicazione in modalità isolata)
+- `POST /api/bookings`
+- `GET /api/bookings/me`
+- `PATCH /api/bookings/:id/accept`
+- `PATCH /api/bookings/:id/cancel`
 
-Git
+### Reviews
 
-🔒 6. Configurazione Variabili d'Ambiente
+- `GET /api/reviews/:tutorId`
+- `POST /api/reviews`
 
-Il progetto utilizza i file .env per nascondere dati sensibili. Non pushare mai i file .env su GitHub!
+### Chat
 
-Nel Backend (backend/.env):
+- `GET /api/chat/conversations`
+- `GET /api/chat/messages/:conversationId`
+- `POST /api/chat/conversations`
 
-Nota: Se utilizzi Docker Compose, il server si collegherà automaticamente al DB con l'host mongo.
+Queste API devono essere documentate anche in Swagger, in quanto il file pratica richiede documentazione delle API backend e cita Swagger come formato utile per la consegna.[1]
 
-PORT=3000
-MONGODB_URI=mongodb://127.0.0.1:27017/skillshare # Per sviluppo locale classico
-# MONGODB_URI=mongodb://mongo:27017/skillshare   # Cambia a questo se usi Docker Compose manuale
-JWT_SECRET=inserisci_una_stringa_molto_lunga_e_segreta
-FRONTEND_URL=http://localhost:5173
+## 4. Chat real-time con Socket.IO
 
+Per la chat si può aprire una connessione Socket.IO dopo il login. Il client si connette passando il token dell'utente, e il server associa il socket all'utente autenticato. La pratica suggerisce espressamente Socket.IO per questo tipo di interazione real-time.[1]
 
-Nel Frontend (frontend/.env):
+Eventi principali possibili:
 
-VITE_API_BASE_URL=http://localhost:3000/api
-VITE_SOCKET_URL=http://localhost:3000
+- `join_conversation`
+- `send_message`
+- `receive_message`
+- `message_read`
 
+Logica di base:
 
-🚀 7. Setup Backend (Sviluppo Locale Classico)
+1. L'utente apre una conversazione.
+2. Il frontend recupera lo storico messaggi via API REST.
+3. Il socket entra nella room della conversazione.
+4. Quando viene inviato un messaggio, il server lo salva nel database.
+5. Il server inoltra il messaggio in tempo reale all'altro partecipante.[1]
 
-Apri un terminale e naviga nella cartella backend:
+## 5. Sistema prenotazioni
 
-cd backend
+La gestione prenotazioni può essere realizzata in questo modo:
 
+1. Il tutor crea o aggiorna gli slot disponibili.
+2. Lo studente apre il profilo del tutor e visualizza solo gli slot liberi.
+3. Lo studente seleziona uno slot e invia la prenotazione.
+4. Il backend crea un booking in stato `pending`.
+5. Il tutor può accettare o disdire.
+6. Se il tutor accetta, lo stato passa a `accepted`.
+7. Se il tutor o lo studente annullano, lo stato passa a `cancelled` e lo slot può tornare disponibile.
 
-Installa le dipendenze:
+È importante gestire correttamente il controllo di concorrenza, in modo che due studenti non prenotino lo stesso slot quasi nello stesso momento.
 
-npm install
+## 6. Sistema recensioni
 
+La recensione dovrebbe essere possibile solo per studenti autenticati e, idealmente, solo se esiste una prenotazione completata con quel tutor. Questo rende il modello più credibile e più corretto dal punto di vista logico.
 
-Crea il file .env basandoti su .env.example.
+Flusso consigliato:
 
-Avvia il server in modalità sviluppo:
+1. Lo studente apre la sezione prenotazioni concluse.
+2. Se una lezione è completata, compare il pulsante “Scrivi recensione”.
+3. Il frontend invia voto e commento al backend.
+4. Il backend salva la recensione e aggiorna media e conteggio nel profilo tutor.
 
-npm run dev
+## 7. Profilo utente, logout ed eliminazione account
 
+La pagina profilo deve includere almeno:
 
-🖥️ 8. Setup Frontend (Sviluppo Locale Classico)
+- Dati personali.
+- Ruolo e stato tutor.
+- Cronologia prenotazioni.
+- Pulsante logout.
+- Pulsante elimina account.
 
-Apri un secondo terminale e naviga nella cartella frontend:
+Per l'eliminazione account hai due opzioni:
 
-cd frontend
+- **Soft delete**: l'account viene marcato come eliminato ma resta nel database.
+- **Hard delete**: l'account viene cancellato davvero.
 
+Per un progetto universitario è spesso più semplice usare una soft delete, perché evita problemi con riferimenti a recensioni, prenotazioni e chat già esistenti.
 
-Installa le dipendenze:
+## 8. Sicurezza minima da implementare
 
-npm install
+Per rendere il progetto corretto e credibile dal punto di vista tecnico è opportuno prevedere:
 
+- Hashing delle password.
+- Validazione input lato server.
+- Protezione delle route autenticate.[1]
+- Controllo dei ruoli per operazioni da tutor.
+- Sanitizzazione dei dati in input.
+- Gestione centralizzata degli errori nel backend.
+- Verifica che solo il tutor proprietario possa modificare le proprie disponibilità.
+- Verifica che solo lo studente autore possa lasciare una recensione legata a una propria prenotazione.
 
-Crea il file .env con le variabili necessarie.
+## Roadmap di sviluppo consigliata
 
-Avvia il server di sviluppo di Vite:
+### Fase 1: setup iniziale
 
-npm run dev
+- Creazione repository.
+- Setup frontend React.
+- Setup backend Express.
+- Configurazione MongoDB Atlas.[1]
 
+### Fase 2: autenticazione
 
-🐳 9. Deployment Locale con Docker e Docker Compose
+- Registrazione utente.
+- Login utente.
+- Logout utente.
+- Middleware auth.
+- Route protette.
+- Eliminazione account.
 
-L'applicazione può essere avviata in pochissimi secondi senza dover installare Node o MongoDB sulla propria macchina fisica. Docker si occuperà di scaricare, configurare ed eseguire tutti i servizi in rete isolata.
+### Fase 3: tutor
 
-Assicurati che Docker Desktop sia attivo sul tuo computer.
+- Modello tutor profile.
+- API per creare e aggiornare profilo tutor.
+- Card tutor e carosello nella home.
+- Pagina elenco tutor con filtri.
+- Gestione disponibilità e slot orari.
 
-Posizionati nella cartella principale del progetto (dove si trova il file docker-compose.yml):
+### Fase 4: prenotazioni e recensioni
 
-cd skillshare
+- Modello booking.
+- Modello availability slot.
+- API prenotazioni.
+- Accettazione/disdetta da parte del tutor.
+- Modello review.
+- Scrittura recensioni da parte dello studente.
 
+### Fase 5: chat
 
-Avvia tutti i container compilando le immagini necessarie:
+- Modelli conversation e message.
+- API per recupero conversazioni.
+- Integrazione Socket.IO client/server.[1]
+- Interfaccia chat nel frontend.
 
-docker compose up --build
+### Fase 6: documentazione e rifinitura
 
+- Documentazione architettura.
+- Modello dati.
+- Swagger API.[1]
+- UML casi d'uso.[1]
+- Credenziali di test per la consegna.[1]
 
-Docker configurerà:
+## Considerazioni finali di progetto
 
-Database: MongoDB esposto sulla porta 27017 del tuo PC (con dati persistenti in un volume Docker dedicato).
+Questa piattaforma rappresenta un progetto adatto al corso perché integra in modo coerente i temi principali richiesti: React lato frontend, Express lato backend, MongoDB cloud, autenticazione sicura, interazione real-time e documentazione tecnica. Inoltre, il dominio applicativo è sufficientemente originale ma resta realistico e realizzabile entro un progetto universitario.
 
-Backend: Server Express in ascolto sulla porta 3000.
-
-Frontend: Applicazione React servita tramite Nginx direttamente sulla porta HTTP 80.
-
-Apri il browser e naviga su http://localhost. Vedrai l'applicazione SkillShare perfettamente funzionante e integrata con il backend!
-
-Comandi utili per Docker:
-
-Arrestare i container: docker compose down
-
-Arrestare eliminando anche i dati nel DB: docker compose down -v
-
-Vedere i log dei container: docker compose logs -f
-
-📖 10. Documentazione e API
-
-Tutta la documentazione di progetto si trova nella cartella docs/.
-
-Diagrammi UML e Modello Dati: Troverai file PDF e Markdown nella cartella docs/UML/ che descrivono i casi d'uso (studente, tutor, admin) e la struttura entità-relazione.
-
-API REST: Le specifiche degli endpoint sono dettagliate nel file docs/API_DOCS.md.
+Dal punto di vista della valutazione, il progetto permette di coprire diverse voci previste dalla pratica: API Express, frontend React, uso di CSS o librerie UI, autenticazione, real-time con Socket.IO, deployment e documentazione Swagger. L'aggiunta di prenotazioni, disponibilità e recensioni rende inoltre l'applicazione più completa e più forte anche dal punto di vista della modellazione dei dati e della qualità della demo finale.
