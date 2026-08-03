@@ -9,7 +9,7 @@ Se il ruolo dell'utente non è autorizzato, viene restituito un errore 403 Forbi
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-function verifyToken(req, res, next) {
+async function verifyToken(req, res, next) {
    
     let token = null;
     const authHeader = req.headers.authorization;
@@ -34,7 +34,7 @@ function verifyToken(req, res, next) {
         const decoded = jwt.verify(token , process.env.JWT_SECRET);
         
         // Verifica se l'utente esiste nel database utilizzando l'ID dell'utente decodificato dal token
-        const userId = User.findById(decoded.id); 
+        const userId = await User.findById(decoded.id); 
         if (!userId) {
             return res.status(401).json({
                 status: 'fail',
@@ -45,6 +45,7 @@ function verifyToken(req, res, next) {
         next(); // Chiama il middleware o il controller successivo
     }
     catch(error){
+        // Se il token non è valido o è scaduto, restituisce un errore 401 Unauthorized
         return res.status(401).json({ 
             status: 'fail',
             message: 'Token non valido o scaduto. Effettua nuovamente il login.',
