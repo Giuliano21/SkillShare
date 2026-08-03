@@ -28,6 +28,6 @@ const reviewSchema = new mongoose.Schema({
         maxlength: 200,
         trim: true
     },
-});
+},{timestamps: true });
 
 module.exports = mongoose.model('Review', reviewSchema);

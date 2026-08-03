@@ -26,6 +26,6 @@ const bookingSchema = new mongoose.Schema({
         enum: ['pending', 'accepted', 'cancelled', 'completed'], 
         default: 'pending' 
     },
-});
+},{timestamps: true });
 
 module.exports = mongoose.model('Booking', bookingSchema);
