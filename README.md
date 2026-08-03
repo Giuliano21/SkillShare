@@ -2,19 +2,19 @@
 
 ## Descrizione del progetto
 
-Il progetto consiste nella realizzazione di una piattaforma web che permetta a studenti e tutor di trovarsi in modo semplice ed efficace. L'obiettivo principale è offrire agli studenti uno strumento per cercare insegnanti filtrandoli per materia, prezzo e altri criteri utili, consentire ai tutor di proporsi agli studenti attraverso un profilo pubblico e permettere ai due attori di interagire tramite chat e prenotazione di lezioni.[1]
+Il progetto consiste nella realizzazione di una piattaforma web che permetta a studenti e tutor di comunicare in modo semplice ed efficace. L'obiettivo principale è offrire agli studenti uno strumento per: cercare tutor filtrandoli per materia, prezzo, valutazione e altre opzioni; prenotare una lezione con un tutor e chattare a vicenda; scrivere recensioni verso i tutor con cui gli studenti hanno svolto una prenotazione.
 
-Dal punto di vista tecnico, l'applicazione deve essere sviluppata come **Single Page Application** con client-side rendering, con un frontend in React, un backend in Node.js + Express e un database MongoDB in cloud. La pratica del corso suggerisce inoltre di prevedere API autenticate, login lato frontend e, per interazioni real-time come la chat, l'uso di Socket.IO.[1]
+Dal punto di vista tecnico, l'applicazione è una **Single Page Application** con client-side rendering, con un frontend in React, un backend in Node.js + Express e un database MongoDB in cloud. Sono state implementate anche API autenticate, login lato frontend e, l'uso di Socket.IO per la chat tra studenti e tutor.
 
 ## Obiettivi del progetto
 
 La piattaforma deve soddisfare questi obiettivi principali:
 
-- Permettere la registrazione e il login degli utenti.[1]
-- Distinguere tra utente studente e utente tutor tramite ruoli applicativi.[1]
+- Permettere la registrazione e il login degli utenti.
+- Distinguere tra utente studente e utente tutor tramite ruoli applicativi.
 - Consentire la ricerca dei tutor tramite filtri.
 - Mostrare schede tutor con informazioni utili alla scelta.
-- Consentire a uno studente autenticato di aprire una chat privata con un tutor.[1]
+- Consentire a uno studente autenticato di aprire una chat privata con un tutor.
 - Consentire allo studente di prenotare una lezione scegliendo uno slot libero del tutor.
 - Consentire allo studente di lasciare una recensione dopo l'esperienza con il tutor.
 - Consentire al tutor di gestire disponibilità, accettare o disdire prenotazioni.
@@ -50,7 +50,7 @@ Ogni tutor mostrato nella home o nella pagina risultati deve essere rappresentat
 
 ### 3. Registrazione e login
 
-La piattaforma deve prevedere un sistema di autenticazione sicura. La pratica consente l'uso di password con hashing, Passport, OAuth o altri meccanismi, oltre a sessioni basate su cookie o JWT.[1]
+La piattaforma deve prevedere un sistema di autenticazione sicura: sessioni basate su JWT e passsword criptate.
 
 La soluzione consigliata per questo progetto è:
 
@@ -58,8 +58,6 @@ La soluzione consigliata per questo progetto è:
 - Login unico per tutti gli utenti.
 - Possibilità, in fase di registrazione oppure successivamente, di diventare tutor.
 - Profilo tutor separato dai dati generali dell'utente.
-
-Questo approccio evita duplicazioni di codice e rende più pulita la gestione dei ruoli applicativi.
 
 ### 4. Profilo tutor
 
@@ -71,7 +69,7 @@ Un utente autenticato può completare il proprio profilo tutor inserendo:
 - Livello di istruzione o qualifiche.
 - Disponibilità settimanale.
 - Slot di orari liberi prenotabili.
-- Eventuale modalità di lezione (online, in presenza, entrambe).
+- Eventuale modalità di lezione (remoto o in presenza).
 
 Il tutor deve anche avere un'area personale in cui:
 
@@ -94,12 +92,12 @@ La barra di ricerca nella navbar può servire per una ricerca rapida, mentre una
 
 ### 6. Chat privata studente-tutor
 
-La chat deve essere disponibile solo agli utenti autenticati. Poiché la pratica suggerisce di usare tecnologie real-time per casi come chat e aggiornamenti in tempo reale, Socket.IO è una scelta coerente e consigliata.[1]
+La chat deve essere disponibile solo agli utenti autenticati usando Socket.IO . 
 
 Funzionalità minime della chat:
 
 - Apertura conversazione tra studente e tutor.
-- Invio e ricezione messaggi in tempo reale.[1]
+- Invio e ricezione messaggi in tempo reale.
 - Visualizzazione dello storico messaggi.
 - Accesso consentito solo agli utenti loggati.
 
@@ -151,54 +149,55 @@ L'eliminazione account deve essere protetta da conferma esplicita, perché compo
 
 ## Architettura del progetto
 
-L'architettura deve rispettare i vincoli della pratica, che richiede un progetto organizzato con due sottocartelle principali: `frontend` e `backend`, da consegnare separatamente e senza `node_modules`.[1]
+Il progetto è organizzato in due sottocartelle principali: `frontend` e `backend` (da consegnare separatamente senza `node_modules`) . 
 
 ### Frontend
 
-Il frontend deve essere realizzato con React, come richiesto esplicitamente dalla pratica. Per la navigazione tra le viste della SPA è opportuno usare React Router, mentre per gestire lo stato globale dell'autenticazione è utile usare Context API o hook custom, entrambe soluzioni coerenti con i suggerimenti del corso.[1]
+Il frontend deve essere realizzato con React. Per la navigazione tra le viste della SPA è opportuno usare React Router, mentre per gestire lo stato globale dell'autenticazione è utile usare Context API.
 
 Tecnologie consigliate lato frontend:
 
 - React.
-- React Router.[1]
-- Context API.[1]
-- Axios oppure Fetch per chiamare le API backend.[1]
-- Material UI oppure CSS personalizzato per i componenti grafici.[1]
-- Socket.IO client per la chat real-time.[1]
+- React Router.
+- Context API.
+- Axios oppure Fetch per chiamare le API backend.
+- Material UI oppure CSS personalizzato per i componenti grafici.
+- Socket.IO client per la chat real-time.
 
-Se vuoi gestire bene la parte prenotazioni, può essere utile integrare un componente calendario nel frontend, oppure iniziare con una lista di slot orari semplificata.
+Per la parte delle prenotazioni, può essere utile integrare un componente calendario nel frontend, oppure iniziare con una lista di slot orari semplificata.
 
 ### Backend
 
-Il backend deve essere sviluppato con Node.js ed Express, in linea con i requisiti tecnici della pratica. Dovrà esporre API REST per autenticazione, gestione utenti, tutor, recensioni, disponibilità, prenotazioni e conversazioni.[1]
+Il backend deve essere sviluppato con Node.js ed Express. Dovrà esporre API REST per autenticazione, gestione utenti, tutor, recensioni, disponibilità, prenotazioni e conversazioni.
 
 Tecnologie consigliate lato backend:
 
 - Node.js.
-- Express.[1]
-- MongoDB Atlas per il database cloud.[1]
+- Express.
+- MongoDB Atlas per il database cloud.
 - Mongoose per la modellazione dei dati.
 - bcrypt per hashing password.
-- JWT oppure cookie di sessione per l'autenticazione.[1]
-- Socket.IO per la chat real-time.[1]
-- Swagger per documentare le API, come suggerito dalla pratica.[1]
+- JWT per l'autenticazione.
+- Socket.IO per la chat real-time.
+- Swagger per documentare le API.
 
-## Modello dati suggerito
+## Modello dati
 
-### Collezione `users`
+### Collezione `User`
 
 Contiene i dati comuni a tutti gli utenti:
 
 - `name`
 - `surname`
+- `username`
 - `email`
-- `passwordHash`
+- `password`
 - `role`
+- `status`
 - `createdAt`
 - `updatedAt`
-- `isDeleted` oppure `status`
 
-### Collezione `tutorProfiles`
+### Collezione `Tutor`
 
 Contiene le informazioni aggiuntive dei tutor:
 
@@ -206,13 +205,11 @@ Contiene le informazioni aggiuntive dei tutor:
 - `subjects`
 - `hourlyPrice`
 - `bio`
-- `education`
-- `availabilityRules`
 - `lessonMode`
-- `ratingAverage`
+- `rating`
 - `reviewsCount`
 
-### Collezione `availabilitySlots`
+### Collezione `AvailabilitySlots`
 
 Contiene gli slot prenotabili dei tutor:
 
@@ -231,7 +228,6 @@ Contiene le prenotazioni delle lezioni:
 - `slotId`
 - `status`
 - `subject`
-- `notes`
 - `createdAt`
 - `updatedAt`
 
@@ -246,7 +242,7 @@ Contiene le recensioni lasciate dagli studenti:
 - `comment`
 - `createdAt`
 
-### Collezione `conversations`
+### Collezione `Conversations`
 
 Contiene le conversazioni tra utenti:
 
@@ -254,7 +250,7 @@ Contiene le conversazioni tra utenti:
 - `createdAt`
 - `updatedAt`
 
-### Collezione `messages`
+### Collezione `Messages`
 
 Contiene i singoli messaggi della chat:
 
@@ -264,7 +260,7 @@ Contiene i singoli messaggi della chat:
 - `timestamp`
 - `isRead`
 
-## Struttura consigliata delle cartelle
+## Struttura delle cartelle
 
 ```text
 project-root/
@@ -298,10 +294,7 @@ project-root/
 │   │   ├── routes/
 │   │   ├── middleware/
 │   │   ├── services/
-│   │   ├── validators/
 │   │   ├── sockets/
-│   │   ├── docs/
-│   │   ├── app.js
 │   │   └── server.js
 │   ├── package.json
 │   └── .env
@@ -312,9 +305,7 @@ project-root/
     └── use-case-uml.png
 ```
 
-Questa struttura è coerente con la consegna, che richiede esplicitamente una cartella di backend e una di frontend e una documentazione tecnica del progetto comprensiva di modello dati e documentazione API.[1]
-
-## Come realizzarlo nel codice
+## Realizzare il codice
 
 ## 1. Avvio del frontend
 
@@ -348,7 +339,7 @@ Esempio di logica router:
 
 ## 2. Gestione autenticazione
 
-L'autenticazione può essere realizzata con backend Express e JWT. Il frontend invia email e password all'API, riceve un token e salva lo stato utente nel contesto applicativo. La pratica consente esplicitamente autenticazione con hashing password e sessioni via JWT o cookie.[1]
+L'autenticazione può essere realizzata con backend Express e JWT. Il frontend invia email e password all'API, riceve un token e salva lo stato utente nel contesto applicativo. La pratica consente esplicitamente autenticazione con hashing password e sessioni via JWT o cookie.
 
 Flusso suggerito:
 
@@ -357,7 +348,7 @@ Flusso suggerito:
 3. La password viene hashata con bcrypt.
 4. L'utente viene salvato in MongoDB.
 5. Al login, il backend verifica credenziali e restituisce un token.
-6. Il frontend usa il token per accedere alle route protette e alle API autenticate.[1]
+6. Il frontend usa il token per accedere alle route protette e alle API autenticate.
 7. Al logout il token viene rimosso lato client oppure invalidato lato server, a seconda della strategia scelta.
 8. In caso di eliminazione account, il backend deve verificare identità e autorizzazione prima di cancellare o disattivare il profilo.
 
@@ -402,7 +393,7 @@ API minime consigliate:
 - `GET /api/chat/messages/:conversationId`
 - `POST /api/chat/conversations`
 
-Queste API devono essere documentate anche in Swagger, in quanto il file pratica richiede documentazione delle API backend e cita Swagger come formato utile per la consegna.[1]
+Queste API devono essere documentate anche in Swagger, in quanto il file pratica richiede documentazione delle API backend e cita Swagger come formato utile per la consegna.
 
 ## 4. Chat real-time con Socket.IO
 
@@ -421,7 +412,7 @@ Logica di base:
 2. Il frontend recupera lo storico messaggi via API REST.
 3. Il socket entra nella room della conversazione.
 4. Quando viene inviato un messaggio, il server lo salva nel database.
-5. Il server inoltra il messaggio in tempo reale all'altro partecipante.[1]
+5. Il server inoltra il messaggio in tempo reale all'altro partecipante.
 
 ## 5. Sistema prenotazioni
 
@@ -471,7 +462,7 @@ Per rendere il progetto corretto e credibile dal punto di vista tecnico è oppor
 
 - Hashing delle password.
 - Validazione input lato server.
-- Protezione delle route autenticate.[1]
+- Protezione delle route autenticate.
 - Controllo dei ruoli per operazioni da tutor.
 - Sanitizzazione dei dati in input.
 - Gestione centralizzata degli errori nel backend.
@@ -485,7 +476,7 @@ Per rendere il progetto corretto e credibile dal punto di vista tecnico è oppor
 - Creazione repository.
 - Setup frontend React.
 - Setup backend Express.
-- Configurazione MongoDB Atlas.[1]
+- Configurazione MongoDB Atlas.
 
 ### Fase 2: autenticazione
 
@@ -517,19 +508,13 @@ Per rendere il progetto corretto e credibile dal punto di vista tecnico è oppor
 
 - Modelli conversation e message.
 - API per recupero conversazioni.
-- Integrazione Socket.IO client/server.[1]
+- Integrazione Socket.IO client/server.
 - Interfaccia chat nel frontend.
 
 ### Fase 6: documentazione e rifinitura
 
 - Documentazione architettura.
 - Modello dati.
-- Swagger API.[1]
-- UML casi d'uso.[1]
-- Credenziali di test per la consegna.[1]
-
-## Considerazioni finali di progetto
-
-Questa piattaforma rappresenta un progetto adatto al corso perché integra in modo coerente i temi principali richiesti: React lato frontend, Express lato backend, MongoDB cloud, autenticazione sicura, interazione real-time e documentazione tecnica. Inoltre, il dominio applicativo è sufficientemente originale ma resta realistico e realizzabile entro un progetto universitario.
-
-Dal punto di vista della valutazione, il progetto permette di coprire diverse voci previste dalla pratica: API Express, frontend React, uso di CSS o librerie UI, autenticazione, real-time con Socket.IO, deployment e documentazione Swagger. L'aggiunta di prenotazioni, disponibilità e recensioni rende inoltre l'applicazione più completa e più forte anche dal punto di vista della modellazione dei dati e della qualità della demo finale.
+- Swagger API.
+- UML casi d'uso.
+- Credenziali di test per la consegna.
