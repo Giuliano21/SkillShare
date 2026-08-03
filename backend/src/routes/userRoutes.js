@@ -1,3 +1,7 @@
+/* userRoutes.js definisce le rotte per la gestione del profilo utente.
+Tutte le rotte qui definite richiedono autenticazione tramite il middleware auth.verifyToken. Le operazioni disponibili sono:
+visualizzare il profilo utente, aggiornare le informazioni del profilo e cancellare l'account utente.
+*/
 const express = require('express');
 const router = express.Router();
 
