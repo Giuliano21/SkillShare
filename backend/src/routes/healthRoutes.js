@@ -1,3 +1,6 @@
+/* healthRoutes.js gestisce le rotte relative allo stato di salute dell'applicazione. 
+Queste rotte vengono utilizzate per verificare se l'applicazione è in esecuzione correttamente e risponde alle richieste. */
+
 const express = require('express');
 const router = express.Router();
 
@@ -5,6 +8,6 @@ const router = express.Router();
 const HealthController = require('../controllers/healthController');
 
 // Rotta per ottenere lo stato dell'applicazione
-router.get('/' , HealthController.getHealthStatus);
+router.get('/' , HealthController.healthCheck);
 
 module.exports = router;

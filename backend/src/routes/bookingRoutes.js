@@ -1,3 +1,6 @@
+/* bookingRoutes.js definisce le rotte per creare, visualizzare, cancellare e aggiornare le prenotazioni. 
+In particolare, alcune rotte sono protette e accessibili solo a determinati tipi di utenti. */
+
 const express = require('express');
 const router = express.Router();
 
