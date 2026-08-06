@@ -21,7 +21,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 app.use(express.json()); // Configuro il middleware per il parsing del corpo delle richieste in formato JSON
-
+app.use(cookieParser()); // Configuro il middleware per il parsing dei cookie nelle richieste
 
 // Importo index.js per gestire le rotte principali dell'API
 const apiRoutes= require('./routes/index');
