@@ -1,6 +1,6 @@
-// authController.js definisce i metodi per gestire la registrazione, il login e il logout degli utenti.
+// authController.js definisce i metodi per gestire la registrazione, il login e il logout degli utenti e il refresh del token.
 
-const jwt= require('jsonwebtoken');
+const tokenService= require('../services/tokenServices');
 const User= require('../models/User');
 const Tutor= require('../models/Tutor');
 
@@ -60,16 +60,70 @@ async function login(req, res) {
     if(!email || !password) return res.status(400).json({ message: 'Inserire email e password' });
     // Cerca l'utente nel database in base all'email fornita
     const user = await User.findOne({ email});
-    // Se l'utente non viene trovato, restituisce un errore di autenticazione
-    if (!user) return res.status(401).json({ message: 'Email o password errata' });
+    // Verifica se la password fornita corrisponde a quella memorizzata nel database
+    const isPasswordValid = user && await user.comparePassword(password);
+    // Se l'utente non viene trovato o la password non è valida, restituisce un errore di autenticazione
+    if (!user || !isPasswordValid) return res.status(401).json({ message: 'Email o password errata' });
    
+    const accessToken = tokenService.generateAccessToken(user); // Genera un access token per l'utente
+    const refreshToken = tokenService.generateRefreshToken(user); // Genera un refresh token per l'utente
+
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Imposta il cookie come sicuro solo in produzione
+        sameSite: 'strict', // Previene attacchi CSRF
+        maxAge: 7 * 24 * 60 * 60 * 1000 // Imposta la durata del cookie a 7 giorni
+    })
+    // Restituisce l'access token al client
+    res.json({
+        accessToken,
+        user: {id: user._id, username: user.username,role: user.role}
+    }); 
+
 
 }
-async function logout(req, res) {
-    
+
+async function refresh(req, res) {
+    try{
+        // Estrae il refresh token dai cookie della richiesta.
+        const refreshToken = req.cookies?.refreshToken; // Il ? serve per gestire il caso in cui req.cookies sia undefined, evitando un errore di tipo "Cannot read property 'refreshToken' of undefined".
+        if(!refreshToken) return res.status(401).json({ message: 'Refresh token mancante. Effettua nuovamente il login.' });
+
+        // Verifica il refresh token utilizzando la funzione verifyRefreshToken del servizio tokenService.
+        try {
+            const decoded = tokenService.verifyRefreshToken(refreshToken);
+            if(!decoded) return res.status(401).json({ message: 'Refresh token non valido o scaduto. Effettua nuovamente il login.' });
+        } catch (error) {
+            return res.status(401).json({ message: 'Refresh token non valido o scaduto. Effettua nuovamente il login.' });
+        }
+
+        // Trova l'utente nel database utilizzando l'ID decodificato dal refresh token.
+        const user = await User.findById(decoded.userId);
+        if(!user) return res.status(401).json({ message: 'Utente non trovato. Effettua nuovamente il login.' });
+
+        // Genera un nuovo access token e un nuovo refresh token per l'utente.
+        const newAccessToken = tokenService.generateAccessToken(user);
+        res.json({ accessToken: newAccessToken });
+    }
+    catch(error){
+       return res.status(500).json({ message: 'Errore durante il refresh del token', error: error.message });
+    }
 }
+
+async function logout(req, res) {
+    // Cancella il cookie del refresh token dal client, invalidando così la sessione dell'utente.
+    res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production', // Imposta il cookie come sicuro solo in produzione
+        sameSite: 'strict' // Previene attacchi CSRF
+    });
+    res.json({ message: 'Logout effettuato con successo.' });
+}
+
+
 module.exports = {
     register,
     login,
+    refresh,
     logout
 }
