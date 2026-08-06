@@ -1,21 +1,23 @@
 /* auth.js è un middleware che gestisce l'autenticazione degli utenti tramite token JWT. 
-La funzione verifyToken controlla se il token è presente nell'header di autorizzazione o nei parametri della query dell'URL, decodifica le informazioni dell'utente e verifica
-se l'utente esiste nel database. Se il token è valido e l'utente esiste, le informazioni dell'utente vengono aggiunte al corpo della richiesta e
-il middleware passa al successivo. In caso contrario, viene restituito un errore 401 Unauthorized con un messaggio appropriato.
-Il middleware include anche una funzione restrictTo che può essere utilizzata per limitare l'accesso a determinate rotte in base ai ruoli degli utenti. 
+La funzione verifyToken controlla se il token è presente nell'header di autorizzazione o nei parametri della query dell'URL, 
+decodifica le informazioni dell'utente e verifica se l'utente esiste nel database. 
+Se il token è valido e l'utente esiste, le informazioni dell'utente vengono aggiunte al corpo della richiesta e il middleware passa al successivo.
+In caso contrario, viene restituito un errore 401 Unauthorized con un messaggio appropriato.
+Il middleware include anche una funzione restrictTo che può essere utilizzata per limitare l'accesso a 
+determinate rotte in base ai ruoli degli utenti. 
 Questa funzione accetta un array di ruoli consentiti e verifica se il ruolo dell'utente corrisponde a uno dei ruoli consentiti.
 Se il ruolo dell'utente non è autorizzato, viene restituito un errore 403 Forbidden.*/
 
-const jwt = require('jsonwebtoken');
+const tokenService = require('../services/tokenServices');
 const User = require('../models/User');
 
 async function verifyToken(req, res, next) {
    
     let token = null;
-    const authHeader = req.headers.authorization;
+    const authHeader = req.headers.authorization || req.headers.Authorization; // Recupera l'header di autorizzazione dalla richiesta
     // Authorization : Bearer <token>
     // Controlla se il token è presente nell'header di autorizzazione e verifica che il token inizi con "Bearer"
-    if (authHeader && authHeader.startsWith('Bearer')) {
+    if (authHeader && authHeader.startsWith('Bearer ')) {
         token = authHeader.split(' ')[1]; // Estrae il token dall'header, dividendo la stringa in base allo spazio e prendendo il secondo elemento dell'array risultante
     } else if (req.query.token) {
         token = req.query.token; // Estrae il token dai parametri della query dell'URL, se presente
@@ -30,8 +32,8 @@ async function verifyToken(req, res, next) {
     }
 
     try {
-        // Verifica il token utilizzando la chiave segreta definita nelle variabili d'ambiente e decodifica le informazioni dell'utente
-        const decoded = jwt.verify(token , process.env.JWT_SECRET);
+        // Verifica il token utilizzando la funzione verifyAccessToken del servizio tokenService e decodifica le informazioni dell'utente
+        const decoded = tokenService.verifyAccessToken(token);
         
         // Verifica se l'utente esiste nel database utilizzando l'ID dell'utente decodificato dal token
         const userId = await User.findById(decoded.id); 
