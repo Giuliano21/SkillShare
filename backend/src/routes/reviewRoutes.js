@@ -1,5 +1,4 @@
-/* reviewRoutes.js definisce le rotte per la gestione delle recensioni dei tutor
- */
+// reviewRoutes.js definisce le rotte per la gestione delle recensioni dei tutor
 
 const express = require('express');
 const router = express.Router();
@@ -11,7 +10,13 @@ const ReviewController = require('../controllers/reviewController');
 const auth = require('../middlewares/auth');
 
 // Rotta per visualizzare tutte le recensioni di un tutor specifico, identificato dall'ID del tutor nella URL
-router.get('/tutor/:id', ReviewController.getReviews);
+router.get('/:tutorId', ReviewController.getReviews);
 // Rotta per creare una nuova recensione
-router.post('/tutor/:id', auth.verifyToken, auth.restrictTo(['student']), ReviewController.createReview);
+router.post('/', auth.verifyToken, auth.restrictTo(['student']), ReviewController.createReview);
+// Rotta per aggiornare la recensione
+router.put('/:id' , auth.verifyToken , auth.restrictTo(['student']), ReviewController.updateReview );
+// Rotta per eliminare la recensione
+router.delete('/:id', auth.verifyToken ,auth.restrictTo(['student']) , ReviewController.deleteReview);
+
+
 module.exports = router;
