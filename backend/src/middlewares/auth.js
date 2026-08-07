@@ -1,12 +1,11 @@
-/* auth.js è un middleware che gestisce l'autenticazione degli utenti tramite token JWT. 
-La funzione verifyToken controlla se il token è presente nell'header di autorizzazione o nei parametri della query dell'URL, 
-decodifica le informazioni dell'utente e verifica se l'utente esiste nel database. 
-Se il token è valido e l'utente esiste, le informazioni dell'utente vengono aggiunte al corpo della richiesta e il middleware passa al successivo.
-In caso contrario, viene restituito un errore 401 Unauthorized con un messaggio appropriato.
-Il middleware include anche una funzione restrictTo che può essere utilizzata per limitare l'accesso a 
-determinate rotte in base ai ruoli degli utenti. 
-Questa funzione accetta un array di ruoli consentiti e verifica se il ruolo dell'utente corrisponde a uno dei ruoli consentiti.
-Se il ruolo dell'utente non è autorizzato, viene restituito un errore 403 Forbidden.*/
+/* auth.js è un middleware che gestisce l'autenticazione degli utenti tramite token JWT. La funzione verifyToken controlla se il
+token è presente nell'header di autorizzazione o nei parametri della query dell'URL, decodifica le informazioni dell'utente e
+verifica se l'utente esiste nel database. Se il token è valido e l'utente esiste, le informazioni dell'utente vengono aggiunte 
+al corpo della richiesta e il middleware passa al successivo. In caso contrario, viene restituito un errore 401 Unauthorized con
+un messaggio appropriato. Il middleware include anche una funzione restrictTo che può essere utilizzata per limitare l'accesso a
+determinate rotte in base ai ruoli degli utenti. Questa funzione accetta un array di ruoli consentiti e verifica
+se il ruolo dell'utente corrisponde a uno dei ruoli consentiti. Se il ruolo dell'utente non è autorizzato, viene restituito un
+errore 403 Forbidden.*/
 
 const tokenService = require('../services/tokenServices');
 const User = require('../models/User');

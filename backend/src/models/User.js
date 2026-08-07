@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema({
         enum: ['active', 'deleted'],
         default: 'active',
     }
-},{timestamps: true });
+},{timestamps: true }); // createdAt e updateAt
 
 // Middleware che, prima di salvare una password, rende la password crittografata utilizzando bcrypt
 userSchema.pre('save' , async function(next){
