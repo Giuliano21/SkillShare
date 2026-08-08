@@ -94,7 +94,7 @@ async function deleteReview(req,res){
 
         if(!review) return res.status(404).json({message: 'Recensione non trovata'});
         // Verifica che l'utente autenticato sia l'autore della recensione prima di permettere la cancellazione
-        if(review.studentId.toString() !== req.user.userId) 
+        if(review.studentId.toString() !== req.user.userId.toString()) 
             return res.status(403).json({message: 'Non sei autorizzato a cancellare questa recensione'});
         // Cancella la recensione dal database e aggiorna le statistiche del tutor
         await Review.findByIdAndDelete(id);
