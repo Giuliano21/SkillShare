@@ -14,7 +14,9 @@ const auth = require('../middlewares/auth');
 // Ricerca dei tutor in base a criteri specifici (ad esempio, materia, disponibilità, ecc.)
 router.get('/' , TutorController.getAllTutors);
 // Recupero le informazioni di un tutor specifico in base al suo ID
-router.get('/:id' , TutorController.getTutorById);  
+router.get('/:id' , TutorController.getTutorById);
+// Aggiunta di nuove disponibilità orarie per un tutor in base al suo ID  
+router.post('/:id/availability', auth.verifyToken , auth.restrictTo(['tutor']) ,TutorController.addTutorAvailability);
 // Recupero le disponibilità orarie di un tutor in base al suo ID
 router.get('/:id/availability', TutorController.getTutorAvailability);
 // Aggiornamento delle disponibilità orarie di un tutor in base al suo ID 
