@@ -16,9 +16,9 @@ router.post('/', auth.restrictTo(['student']) ,BookingController.createBooking);
 // Rotta per visualizzare le prenotazioni
 router.get('/my-bookings', BookingController.getBookings);
 // Rotta per cancellare una prenotazione, accessibile solo agli studenti
-router.delete('/:id', auth.restrictTo(['student']) ,BookingController.cancelBooking);
+router.patch('/:id/cancel', auth.restrictTo(['student']) ,BookingController.cancelBooking);
 // Rotta per aggiornare lo stato di una prenotazione, accessibile solo ai tutor
-router.put('/:id/status', auth.restrictTo(['tutor']) ,BookingController.updateBookingStatus);
+router.patch('/:id/status', auth.restrictTo(['tutor']) ,BookingController.updateBookingStatus);
 
 
 module.exports = router;
