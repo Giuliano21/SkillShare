@@ -9,4 +9,8 @@ const auth = require('../middlewares/auth');
 router.use(auth.verifyToken); // Tutte le rotte richiedono autenticazione
 
 router.get('/', chatController.getMyConversations);
+
+router.get('/:conversationId/messages', chatController.getMessages);
+
+router.post('/:conversationId/messages', chatController.sendMessage);
 module.exports = router;
