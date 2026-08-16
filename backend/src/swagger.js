@@ -34,10 +34,10 @@ const swaggerDefinition = {
         type: 'object',
         properties: {
           _id: { type: 'string', example: '64d1f4c9e1b44a0012345678' },
-          name: { type: 'string', example: 'Giuliano' },
+          name: { type: 'string', example: 'Mario' },
           surname: { type: 'string', example: 'Rossi' },
-          username: { type: 'string', example: 'giuliano' },
-          email: { type: 'string', format: 'email', example: 'giuliano@example.com' },
+          username: { type: 'string', example: 'mariorossi' },
+          email: { type: 'string', format: 'email', example: 'mariorossi@example.com' },
           role: {
             type: 'array',
             items: { type: 'string', enum: ['student', 'tutor'] },
@@ -52,17 +52,17 @@ const swaggerDefinition = {
         type: 'object',
         required: ['name', 'surname', 'username', 'email', 'password'],
         properties: {
-          name: { type: 'string', example: 'Giuliano' },
+          name: { type: 'string', example: 'Mario' },
           surname: { type: 'string', example: 'Rossi' },
-          username: { type: 'string', example: 'giuliano' },
-          email: { type: 'string', format: 'email', example: 'giuliano@example.com' },
+          username: { type: 'string', example: 'mariorossi' },
+          email: { type: 'string', format: 'email', example: 'mariorossi@example.com' },
           password: { type: 'string', minLength: 6, example: 'secret123' },
           role: {
             oneOf: [
               { type: 'string', enum: ['student', 'tutor'] },
               { type: 'array', items: { type: 'string', enum: ['student', 'tutor'] } }
             ],
-            example: ['student']
+            example: ['tutor']
           },
           subjects: {
             type: 'array',
@@ -78,7 +78,7 @@ const swaggerDefinition = {
         type: 'object',
         required: ['email', 'password'],
         properties: {
-          email: { type: 'string', format: 'email', example: 'giuliano@example.com' },
+          email: { type: 'string', format: 'email', example: 'mariorossi@example.com' },
           password: { type: 'string', example: 'secret123' }
         }
       },
@@ -186,7 +186,7 @@ const swaggerDefinition = {
     }
   },
   paths: {
-    '/health/': {
+    '/api/v1/health': {
       get: {
         tags: ['Health'],
         summary: 'Controllo dello stato del backend',
@@ -208,7 +208,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/auth/register': {
+    '/api/v1/auth/register': {
       post: {
         tags: ['Auth'],
         summary: 'Registra un nuovo utente',
@@ -249,7 +249,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/auth/login': {
+    '/api/v1/auth/login': {
       post: {
         tags: ['Auth'],
         summary: 'Esegue il login dell\'utente',
@@ -277,7 +277,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/auth/logout': {
+    '/api/v1/auth/logout': {
       post: {
         tags: ['Auth'],
         summary: 'Logout e invalidazione refresh token',
@@ -298,7 +298,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/auth/refresh': {
+    '/api/v1/auth/refresh': {
       post: {
         tags: ['Auth'],
         summary: 'Genera un nuovo access token usando il refresh token',
@@ -323,7 +323,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/users/profile': {
+    '/api/v1/users/profile': {
       get: {
         tags: ['Users'],
         summary: 'Recupera il profilo dell\'utente autenticato',
@@ -400,7 +400,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/tutors': {
+    '/api/v1/tutors': {
       get: {
         tags: ['Tutors'],
         summary: 'Recupera i tutor in base a filtri',
@@ -433,7 +433,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/tutors/{id}': {
+    '/api/v1/tutors/{id}': {
       get: {
         tags: ['Tutors'],
         summary: 'Recupera un tutor specifico',
@@ -447,7 +447,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/tutors/{id}/availability': {
+    '/api/v1/tutors/{id}/availability': {
       get: {
         tags: ['Tutors'],
         summary: 'Recupera disponibilità del tutor',
@@ -532,7 +532,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/bookings': {
+    '/api/v1/bookings': {
       post: {
         tags: ['Bookings'],
         summary: 'Crea una nuova prenotazione',
@@ -563,32 +563,8 @@ const swaggerDefinition = {
           '403': { $ref: '#/components/responses/Forbidden' }
         }
       },
-      get: {
-        tags: ['Bookings'],
-        summary: 'Recupera le prenotazioni dell\'utente autenticato',
-        security: [{ bearerAuth: [] }],
-        responses: {
-          '200': {
-            description: 'Lista prenotazioni',
-            content: {
-              'application/json': {
-                schema: {
-                  type: 'object',
-                  properties: {
-                    bookings: {
-                      type: 'array',
-                      items: { $ref: '#/components/schemas/Booking' }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          '401': { $ref: '#/components/responses/Unauthorized' }
-        }
-      }
     },
-    '/bookings/my-bookings': {
+    '/api/v1/bookings/my-bookings': {
       get: {
         tags: ['Bookings'],
         summary: 'Recupera tutte le prenotazioni dell\'utente autenticato',
@@ -599,7 +575,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/bookings/{id}/cancel': {
+    '/api/v1/bookings/{id}/cancel': {
       patch: {
         tags: ['Bookings'],
         summary: 'Cancella una prenotazione da studente',
@@ -613,7 +589,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/bookings/{id}/status': {
+    '/api/v1/bookings/{id}/status': {
       patch: {
         tags: ['Bookings'],
         summary: 'Aggiorna lo stato di una prenotazione da tutor',
@@ -642,7 +618,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/reviews/{tutorId}': {
+    '/api/v1/reviews/{tutorId}': {
       get: {
         tags: ['Reviews'],
         summary: 'Recupera le recensioni di un tutor',
@@ -668,7 +644,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/reviews': {
+    '/api/v1/reviews': {
       post: {
         tags: ['Reviews'],
         summary: 'Crea una nuova recensione',
@@ -697,7 +673,7 @@ const swaggerDefinition = {
         }
       }
     },
-    '/reviews/{id}': {
+    '/api/v1/reviews/{id}': {
       put: {
         tags: ['Reviews'],
         summary: 'Aggiorna una recensione esistente',
