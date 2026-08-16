@@ -33,16 +33,22 @@ async function verifyToken(req, res, next) {
     try {
         // Verifica il token utilizzando la funzione verifyAccessToken del servizio tokenService e decodifica le informazioni dell'utente
         const decoded = tokenService.verifyAccessToken(token);
-        
+
         // Verifica se l'utente esiste nel database utilizzando l'ID dell'utente decodificato dal token
-        const userId = await User.findById(decoded.id); 
-        if (!userId) {
+        const userDoc = await User.findById(decoded.userId);
+        if (!userDoc) {
             return res.status(401).json({
                 status: 'fail',
                 message: 'L\'utente associato a questo token non esiste più. Effettua nuovamente il login.'
             });
         }
-        req.user = userId; // Aggiunge le informazioni dell'utente al corpo della richiesta
+
+        req.user = {
+            ...userDoc.toObject(),
+            _id: userDoc._id,
+            userId: userDoc._id,
+            role: userDoc.role
+        };
         next(); // Chiama il middleware o il controller successivo
     }
     catch(error){
@@ -57,17 +63,18 @@ async function verifyToken(req, res, next) {
 
 function restrictTo(roles){
     return (req, res, next) => {
+        const userRoles = Array.isArray(req.user.role) ? req.user.role : [req.user.role];
+
         // Controlla se il ruolo dell'utente è incluso nell'array dei ruoli consentiti
-        if(!roles.includes(req.user.role)){
-            // Se il ruolo dell'utente non è autorizzato, restituisce un errore 403 Forbidden 
+        if (!userRoles.some(role => roles.includes(role))) {
+            // Se il ruolo dell'utente non è autorizzato, restituisce un errore 403 Forbidden
             return res.status(403).json({
                 status: 'fail',
                 message: 'Non hai i permessi necessari per accedere a questa risorsa.'
             });
         }
         next();
-    }
-     
+    };
 }
 
 
