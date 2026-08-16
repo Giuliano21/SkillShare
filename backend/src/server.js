@@ -7,6 +7,7 @@ const express= require('express');
 const cors= require('cors');
 const db= require('./config/db');
 const app= express();
+const cookieParser= require('cookie-parser');
 // Prendo i dati dalle variabili d'ambiente definite nel file .env
 require('dotenv').config();
 const PORT= process.env.PORT || 3000;
@@ -14,7 +15,7 @@ const PORT= process.env.PORT || 3000;
 /* Configuro il middleware CORS per consentire le richieste da domini diversi, specificando i metodi consentiti,
 gli header consentiti, la possibilità di inviare cookie e le intestazioni esposte per la gestione dello streaming video e della paginazione. */
 const corsOptions = {
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], 
     allowHeaders: ['Content-Type', 'Authorization'], 
     credentials: true ,   
 };
@@ -26,13 +27,7 @@ app.use(cookieParser()); // Configuro il middleware per il parsing dei cookie ne
 // Importo index.js per gestire le rotte principali dell'API
 const apiRoutes= require('./routes/index');
 app.use('/api/v1', apiRoutes);
-// Gestisco le rotte non trovate con un middleware che restituisce un messaggio di errore in formato JSON
-app.all('*' , (req, res) => {
-    res.status(404).json({
-        status: 'error',
-        message: `La rotta ${req.originalUrl} non è stata trovata sul server!`
-    })
-}); 
+
 // Configuro la documentazione dell'API utilizzando Swagger
 const swaggerUi = require('swagger-ui-express'); // Importo il modulo swagger-ui-express per la documentazione dell'API
 const swaggerSpec = require('./swagger'); // swaggerSpec è il file che contiene la documentazione dell'API in formato OpenAPI
@@ -46,4 +41,12 @@ app.listen(PORT , () => {
     console.log(`Il server è avviato su http://localhost:${PORT}`);
     console.log(`La documentazione dell'API è disponibile su http://localhost:${PORT}/api-docs`);
 });
+
+// Gestisco le rotte non trovate con un middleware che restituisce un messaggio di errore in formato JSON
+app.use((req, res) => {
+    res.status(404).json({
+        status: 'error',
+        message: `La rotta ${req.originalUrl} non è stata trovata sul server!`
+    });
+}); 
 
