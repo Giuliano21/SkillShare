@@ -6,7 +6,7 @@ const express = require('express');
 const router = express.Router();
 
 // Importo il controller per gestire le operazioni relative agli utenti
-const UserController = require('../controllers/UserController');
+const UserController = require('../controllers/userController');
 
 // Importo il middleware per verificare il token JWT e proteggere le rotte che richiedono autenticazione
 const auth = require('../middlewares/auth');

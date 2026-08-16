@@ -5,7 +5,7 @@ const express = require('express');
 const router = express.Router();
 
 // Importo il controller per gestire le prenotazioni dei tutor
-const BookingController = require('../controllers/BookingController');
+const BookingController = require('../controllers/bookingController');
 // Importo il middleware per verificare il token JWT e proteggere le rotte che richiedono autenticazione
 const auth = require('../middlewares/auth');
 
