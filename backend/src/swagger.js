@@ -1,0 +1,750 @@
+const swaggerJSDoc = require('swagger-jsdoc');
+
+const swaggerDefinition = {
+  openapi: '3.0.0',
+  info: {
+    title: 'SkillShare API',
+    version: '1.0.0',
+    description: 'Documentazione completa delle API di SkillShare per autenticazione, tutor, prenotazioni e recensioni.'
+  },
+  servers: [
+    {
+      url: 'http://localhost:3000',
+      description: 'Server locale di sviluppo'
+    }
+  ],
+  tags: [
+    { name: 'Health', description: 'Verifica dello stato del backend' },
+    { name: 'Auth', description: 'Registrazione, login e refresh token' },
+    { name: 'Users', description: 'Gestione profilo utente' },
+    { name: 'Tutors', description: 'Ricerca tutor e disponibilità' },
+    { name: 'Bookings', description: 'Prenotazioni e aggiornamento stato' },
+    { name: 'Reviews', description: 'Recensioni ai tutor' }
+  ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT'
+      }
+    },
+    schemas: {
+      User: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string', example: '64d1f4c9e1b44a0012345678' },
+          name: { type: 'string', example: 'Giuliano' },
+          surname: { type: 'string', example: 'Rossi' },
+          username: { type: 'string', example: 'giuliano' },
+          email: { type: 'string', format: 'email', example: 'giuliano@example.com' },
+          role: {
+            type: 'array',
+            items: { type: 'string', enum: ['student', 'tutor'] },
+            example: ['student']
+          },
+          status: { type: 'string', enum: ['active', 'deleted'], example: 'active' },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      RegisterRequest: {
+        type: 'object',
+        required: ['name', 'surname', 'username', 'email', 'password'],
+        properties: {
+          name: { type: 'string', example: 'Giuliano' },
+          surname: { type: 'string', example: 'Rossi' },
+          username: { type: 'string', example: 'giuliano' },
+          email: { type: 'string', format: 'email', example: 'giuliano@example.com' },
+          password: { type: 'string', minLength: 6, example: 'secret123' },
+          role: {
+            oneOf: [
+              { type: 'string', enum: ['student', 'tutor'] },
+              { type: 'array', items: { type: 'string', enum: ['student', 'tutor'] } }
+            ],
+            example: ['student']
+          },
+          subjects: {
+            type: 'array',
+            items: { type: 'string' },
+            example: ['Matematica', 'Fisica']
+          },
+          hourlyPrice: { type: 'number', example: 25 },
+          bio: { type: 'string', example: 'Tutor esperto in matematica' },
+          lessonMode: { type: 'string', enum: ['remote', 'presence'], example: 'remote' }
+        }
+      },
+      LoginRequest: {
+        type: 'object',
+        required: ['email', 'password'],
+        properties: {
+          email: { type: 'string', format: 'email', example: 'giuliano@example.com' },
+          password: { type: 'string', example: 'secret123' }
+        }
+      },
+      AuthTokenResponse: {
+        type: 'object',
+        properties: {
+          accessToken: { type: 'string', example: 'eyJhbGciOiJIUzI1NiJ9...' },
+          user: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              username: { type: 'string' },
+              role: {
+                type: 'array',
+                items: { type: 'string' }
+              }
+            }
+          }
+        }
+      },
+      Tutor: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string', example: '64d1f4c9e1b44a0012345679' },
+          userId: { type: 'string', example: '64d1f4c9e1b44a0012345678' },
+          subjects: {
+            type: 'array',
+            items: { type: 'string' },
+            example: ['Matematica']
+          },
+          hourlyPrice: { type: 'number', example: 25 },
+          bio: { type: 'string', example: 'Tutor esperto in matematica' },
+          lessonMode: { type: 'string', enum: ['remote', 'presence'], example: 'remote' },
+          rating: { type: 'number', example: 4.5 },
+          reviewsCount: { type: 'integer', example: 12 }
+        }
+      },
+      AvailabilitySlot: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string', example: '64d1f4c9e1b44a0012345680' },
+          tutorId: { type: 'string', example: '64d1f4c9e1b44a0012345679' },
+          startDay: { type: 'integer', minimum: 1, maximum: 7, example: 1 },
+          endDay: { type: 'integer', minimum: 1, maximum: 7, example: 1 },
+          startTime: { type: 'string', pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$', example: '09:00' },
+          endTime: { type: 'string', pattern: '^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$', example: '10:00' },
+          isBooked: { type: 'boolean', example: false }
+        }
+      },
+      Booking: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string', example: '64d1f4c9e1b44a0012345681' },
+          userId: { type: 'string', example: '64d1f4c9e1b44a0012345678' },
+          tutorId: { type: 'string', example: '64d1f4c9e1b44a0012345679' },
+          slotId: { type: 'string', example: '64d1f4c9e1b44a0012345680' },
+          subject: { type: 'string', example: 'Matematica' },
+          status: { type: 'string', enum: ['pending', 'accepted', 'cancelled', 'completed'], example: 'pending' }
+        }
+      },
+      Review: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string', example: '64d1f4c9e1b44a0012345682' },
+          userId: { type: 'string', example: '64d1f4c9e1b44a0012345678' },
+          tutorId: { type: 'string', example: '64d1f4c9e1b44a0012345679' },
+          bookingId: { type: 'string', example: '64d1f4c9e1b44a0012345681' },
+          rating: { type: 'number', minimum: 1, maximum: 5, example: 5 },
+          comment: { type: 'string', example: 'Ottimo tutor, molto disponibile' }
+        }
+      },
+      Error: {
+        type: 'object',
+        properties: {
+          message: { type: 'string', example: 'Errore del server' },
+          error: { type: 'string', example: 'Dettaglio dell\'errore' }
+        }
+      }
+    },
+    responses: {
+      Unauthorized: {
+        description: 'Token JWT mancante o non valido',
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/Error' }
+          }
+        }
+      },
+      Forbidden: {
+        description: 'Permessi insufficienti',
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/Error' }
+          }
+        }
+      },
+      NotFound: {
+        description: 'Risorsa non trovata',
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/Error' }
+          }
+        }
+      }
+    }
+  },
+  paths: {
+    '/health/': {
+      get: {
+        tags: ['Health'],
+        summary: 'Controllo dello stato del backend',
+        responses: {
+          '200': {
+            description: 'Backend in funzione',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    status: { type: 'string', example: 'success' },
+                    message: { type: 'string', example: 'Il server è correttamente in funzione' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/auth/register': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Registra un nuovo utente',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/RegisterRequest' }
+            }
+          }
+        },
+        responses: {
+          '201': {
+            description: 'Utente registrato con successo',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string', example: 'Utente registrato con successo' },
+                    user: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        username: { type: 'string' },
+                        email: { type: 'string' }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '400': {
+            description: 'Dati non validi o utente già esistente',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } }
+          }
+        }
+      }
+    },
+    '/auth/login': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Esegue il login dell\'utente',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/LoginRequest' }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Login eseguito correttamente',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/AuthTokenResponse' }
+              }
+            }
+          },
+          '401': {
+            description: 'Credenziali non valide',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } }
+          }
+        }
+      }
+    },
+    '/auth/logout': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Logout e invalidazione refresh token',
+        responses: {
+          '200': {
+            description: 'Logout eseguito',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string', example: 'Logout effettuato con successo.' }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/auth/refresh': {
+      post: {
+        tags: ['Auth'],
+        summary: 'Genera un nuovo access token usando il refresh token',
+        responses: {
+          '200': {
+            description: 'Nuovo access token generato',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    accessToken: { type: 'string' }
+                  }
+                }
+              }
+            }
+          },
+          '401': {
+            description: 'Refresh token mancante o non valido',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } }
+          }
+        }
+      }
+    },
+    '/users/profile': {
+      get: {
+        tags: ['Users'],
+        summary: 'Recupera il profilo dell\'utente autenticato',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Profilo utente recuperato',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    user: { $ref: '#/components/schemas/User' }
+                  }
+                }
+              }
+            }
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '404': { $ref: '#/components/responses/NotFound' }
+        }
+      },
+      put: {
+        tags: ['Users'],
+        summary: 'Aggiorna il profilo dell\'utente autenticato',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                  surname: { type: 'string' },
+                  username: { type: 'string' },
+                  email: { type: 'string', format: 'email' },
+                  currentPassword: { type: 'string' },
+                  newPassword: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Profilo aggiornato con successo',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/User' } } }
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '404': { $ref: '#/components/responses/NotFound' }
+        }
+      },
+      delete: {
+        tags: ['Users'],
+        summary: 'Soft-delete del profilo utente',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Profilo cancellato correttamente',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string', example: 'Profilo utente cancellato con successo' }
+                  }
+                }
+              }
+            }
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '404': { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+    '/tutors': {
+      get: {
+        tags: ['Tutors'],
+        summary: 'Recupera i tutor in base a filtri',
+        parameters: [
+          { name: 'subject', in: 'query', schema: { type: 'string' }, description: 'Materia da ricercare' },
+          { name: 'minPrice', in: 'query', schema: { type: 'number' }, description: 'Prezzo minimo orario' },
+          { name: 'maxPrice', in: 'query', schema: { type: 'number' }, description: 'Prezzo massimo orario' },
+          { name: 'minRating', in: 'query', schema: { type: 'number' }, description: 'Valutazione minima' },
+          { name: 'lessonMode', in: 'query', schema: { type: 'string', enum: ['remote', 'presence'] }, description: 'Modalità di lezione' },
+          { name: 'sort', in: 'query', schema: { type: 'string', enum: ['subject', 'price', 'rating', 'lessonMode'] }, description: 'Campo di ordinamento' }
+        ],
+        responses: {
+          '200': {
+            description: 'Lista tutor',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string' },
+                    tutors: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/Tutor' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/tutors/{id}': {
+      get: {
+        tags: ['Tutors'],
+        summary: 'Recupera un tutor specifico',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Tutor trovato',
+            content: { 'application/json': { schema: { type: 'object', properties: { tutor: { $ref: '#/components/schemas/Tutor' } } } } }
+          },
+          '404': { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+    '/tutors/{id}/availability': {
+      get: {
+        tags: ['Tutors'],
+        summary: 'Recupera disponibilità del tutor',
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Disponibilità recuperata',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string' },
+                    availabilitySlots: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/AvailabilitySlot' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      post: {
+        tags: ['Tutors'],
+        summary: 'Aggiunge una disponibilità per il tutor autenticato',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['startDay', 'endDay', 'startTime', 'endTime'],
+                properties: {
+                  startDay: { type: 'integer', minimum: 1, maximum: 7 },
+                  endDay: { type: 'integer', minimum: 1, maximum: 7 },
+                  startTime: { type: 'string', example: '09:00' },
+                  endTime: { type: 'string', example: '10:00' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '201': {
+            description: 'Disponibilità aggiunta con successo',
+            content: { 'application/json': { schema: { type: 'object', properties: { availabilitySlot: { $ref: '#/components/schemas/AvailabilitySlot' } } } } }
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' }
+        }
+      },
+      put: {
+        tags: ['Tutors'],
+        summary: 'Aggiorna una disponibilità esistente del tutor',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  startDay: { type: 'integer' },
+                  endDay: { type: 'integer' },
+                  startTime: { type: 'string' },
+                  endTime: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Disponibilità aggiornata' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+    '/bookings': {
+      post: {
+        tags: ['Bookings'],
+        summary: 'Crea una nuova prenotazione',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['tutorId', 'slotId', 'subject'],
+                properties: {
+                  tutorId: { type: 'string', example: '64d1f4c9e1b44a0012345679' },
+                  slotId: { type: 'string', example: '64d1f4c9e1b44a0012345680' },
+                  subject: { type: 'string', example: 'Matematica' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '201': {
+            description: 'Prenotazione creata',
+            content: { 'application/json': { schema: { type: 'object', properties: { booking: { $ref: '#/components/schemas/Booking' } } } } }
+          },
+          '400': { $ref: '#/components/responses/NotFound' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' }
+        }
+      },
+      get: {
+        tags: ['Bookings'],
+        summary: 'Recupera le prenotazioni dell\'utente autenticato',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Lista prenotazioni',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    bookings: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/Booking' }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' }
+        }
+      }
+    },
+    '/bookings/my-bookings': {
+      get: {
+        tags: ['Bookings'],
+        summary: 'Recupera tutte le prenotazioni dell\'utente autenticato',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': { description: 'Prenotazioni recuperate', content: { 'application/json': { schema: { type: 'object', properties: { bookings: { type: 'array', items: { $ref: '#/components/schemas/Booking' } } } } } } },
+          '401': { $ref: '#/components/responses/Unauthorized' }
+        }
+      }
+    },
+    '/bookings/{id}/cancel': {
+      patch: {
+        tags: ['Bookings'],
+        summary: 'Cancella una prenotazione da studente',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: 'Prenotazione cancellata' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+    '/bookings/{id}/status': {
+      patch: {
+        tags: ['Bookings'],
+        summary: 'Aggiorna lo stato di una prenotazione da tutor',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['status'],
+                properties: {
+                  status: { type: 'string', enum: ['pending', 'accepted', 'completed'] }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Stato prenotazione aggiornato' },
+          '400': { description: 'Stato non valido' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+    '/reviews/{tutorId}': {
+      get: {
+        tags: ['Reviews'],
+        summary: 'Recupera le recensioni di un tutor',
+        parameters: [{ name: 'tutorId', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': {
+            description: 'Recensioni recuperate',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string' },
+                    reviews: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/Review' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/reviews': {
+      post: {
+        tags: ['Reviews'],
+        summary: 'Crea una nuova recensione',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['tutorId', 'bookingId', 'rating'],
+                properties: {
+                  tutorId: { type: 'string' },
+                  bookingId: { type: 'string' },
+                  rating: { type: 'number', minimum: 1, maximum: 5 },
+                  comment: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '201': { description: 'Recensione creata', content: { 'application/json': { schema: { type: 'object', properties: { review: { $ref: '#/components/schemas/Review' } } } } } },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { description: 'Prenotazione non completata o non valida' }
+        }
+      }
+    },
+    '/reviews/{id}': {
+      put: {
+        tags: ['Reviews'],
+        summary: 'Aggiorna una recensione esistente',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  rating: { type: 'number', minimum: 1, maximum: 5 },
+                  comment: { type: 'string' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': { description: 'Recensione aggiornata' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' }
+        }
+      },
+      delete: {
+        tags: ['Reviews'],
+        summary: 'Elimina una recensione',
+        security: [{ bearerAuth: [] }],
+        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        responses: {
+          '200': { description: 'Recensione eliminata' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    }
+  }
+};
+
+const options = {
+  swaggerDefinition,
+  apis: []
+};
+
+const swaggerSpec = swaggerJSDoc(options);
+
+module.exports = swaggerSpec;
