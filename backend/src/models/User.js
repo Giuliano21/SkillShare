@@ -46,17 +46,15 @@ const userSchema = new mongoose.Schema({
 },{timestamps: true }); // createdAt e updateAt
 
 // Middleware che, prima di salvare una password, rende la password crittografata utilizzando bcrypt
-userSchema.pre('save' , async function(next){
-
-    if(!this.isModified('password')) return next();
+userSchema.pre('save', async function() {
+    if (!this.isModified('password')) return;
     // 10 è la lunghezza del salt
-    this.password = await bcrypt.hash(this.password , 10);
-    next();
+    this.password = await bcrypt.hash(this.password, 10);
 });
 
 // Metodo per verificare che la password inserita dall'utente corrisponda alla password hashata nel database
-userSchema.comparePassword() = async function(candidatePassword){
+userSchema.methods.comparePassword = async function(candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
-}
+};
 
 module.exports = mongoose.model('User', userSchema);
