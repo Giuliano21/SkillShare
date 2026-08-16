@@ -7,15 +7,16 @@ const Tutor= require('../models/Tutor');
 async function register(req, res) {
     try{
         // Estrae i dati dell'utente dalla richiesta
-        const { name, surname, username, email, password, role  } = req.body;
-       
+        const { name, surname, username, email, password, role } = req.body;
+        const roles = Array.isArray(role) ? role : (role ? [role] : ['student']);
+
         // Verifica se l'utente esiste già nel database
         const existingUser = await User.findOne({ $or: [{ username }, { email }] }); // Controlla se esiste un utente con lo stesso username o email
         // Se l'utente esiste già, restituisce un errore
         if (existingUser) return res.status(400).json({ message: 'Username o email già esistenti' }); 
 
         // Crea un nuovo utente e, se il ruolo è "tutor", crea anche un nuovo tutor associato all'utente
-        const newUser = new User({ name, surname, username, email, password, role });
+        const newUser = new User({ name, surname, username, email, password, role: roles });
         await newUser.save(); // Salva il nuovo utente nel database
         // Restituisce una risposta di successo con i dati dell'utente appena creato
         res.status(201).json({ 
@@ -27,14 +28,21 @@ async function register(req, res) {
             }
         });
 
-        if (role.includes('tutor')) {
+        if (roles.includes('tutor')) {
             // Se il ruolo dell'utente è "tutor", estrai ulteriori informazioni per i tutor
-            const subjects=req.body.subject;
-            const hourlyPrice=req.body.hourlyPrice;
-            const bio=req.body.bio;  
-            const availibility=req.body.availibility;
+            const subjects = req.body.subjects || req.body.subject || [];
+            const hourlyPrice = req.body.hourlyPrice;
+            const bio = req.body.bio || '';
+            const lessonMode = req.body.lessonMode || 'remote';
+
             // Crea un nuovo tutor associato all'utente appena creato
-            const newTutor = new Tutor({ userId: newUser._id, subjects, hourlyPrice, bio, availibility });
+            const newTutor = new Tutor({
+                userId: newUser._id,
+                subjects,
+                hourlyPrice,
+                bio,
+                lessonMode
+            });
             await newTutor.save(); // Salva il nuovo tutor nel database
             // Restituisce una risposta di successo con i dati del tutor appena creato
             res.status(201).json({ 
@@ -46,9 +54,9 @@ async function register(req, res) {
         }
     }
     catch(error){
-        res.status(400).json({ 
+        res.status(400).json({
             message: 'Errore nella registrazione dell\'utente',
-            error
+            error: error.message
         });
     }
 }
@@ -84,29 +92,34 @@ async function login(req, res) {
 }
 
 async function refresh(req, res) {
-    try{
+    try {
         // Estrae il refresh token dai cookie della richiesta.
-        const refreshToken = req.cookies?.refreshToken; // Il ? serve per gestire il caso in cui req.cookies sia undefined, evitando un errore di tipo "Cannot read property 'refreshToken' of undefined".
-        if(!refreshToken) return res.status(401).json({ message: 'Refresh token mancante. Effettua nuovamente il login.' });
+        const refreshToken = req.cookies?.refreshToken;
+        if (!refreshToken) {
+            return res.status(401).json({ message: 'Refresh token mancante. Effettua nuovamente il login.' });
+        }
 
-        // Verifica il refresh token utilizzando la funzione verifyRefreshToken del servizio tokenService.
+        let decoded;
         try {
-            const decoded = tokenService.verifyRefreshToken(refreshToken);
-            if(!decoded) return res.status(401).json({ message: 'Refresh token non valido o scaduto. Effettua nuovamente il login.' });
+            decoded = tokenService.verifyRefreshToken(refreshToken);
+            if (!decoded) {
+                return res.status(401).json({ message: 'Refresh token non valido o scaduto. Effettua nuovamente il login.' });
+            }
         } catch (error) {
             return res.status(401).json({ message: 'Refresh token non valido o scaduto. Effettua nuovamente il login.' });
         }
 
         // Trova l'utente nel database utilizzando l'ID decodificato dal refresh token.
         const user = await User.findById(decoded.userId);
-        if(!user) return res.status(401).json({ message: 'Utente non trovato. Effettua nuovamente il login.' });
+        if (!user) {
+            return res.status(401).json({ message: 'Utente non trovato. Effettua nuovamente il login.' });
+        }
 
-        // Genera un nuovo access token e un nuovo refresh token per l'utente.
+        // Genera un nuovo access token per l'utente.
         const newAccessToken = tokenService.generateAccessToken(user);
-        res.json({ accessToken: newAccessToken });
-    }
-    catch(error){
-       return res.status(500).json({ message: 'Errore durante il refresh del token', error: error.message });
+        return res.json({ accessToken: newAccessToken });
+    } catch (error) {
+        return res.status(500).json({ message: 'Errore durante il refresh del token', error: error.message });
     }
 }
 
