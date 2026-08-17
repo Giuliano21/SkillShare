@@ -19,7 +19,8 @@ const swaggerDefinition = {
     { name: 'Users', description: 'Gestione profilo utente' },
     { name: 'Tutors', description: 'Ricerca tutor e disponibilità' },
     { name: 'Bookings', description: 'Prenotazioni e aggiornamento stato' },
-    { name: 'Reviews', description: 'Recensioni ai tutor' }
+    { name: 'Reviews', description: 'Recensioni ai tutor' },
+    { name: 'Chats', description: 'Chat privata real-time tra tutor e studente' }
   ],
   components: {
     securitySchemes: {
@@ -148,6 +149,103 @@ const swaggerDefinition = {
           bookingId: { type: 'string', example: '64d1f4c9e1b44a0012345681' },
           rating: { type: 'number', minimum: 1, maximum: 5, example: 5 },
           comment: { type: 'string', example: 'Ottimo tutor, molto disponibile' }
+        }
+      },
+      Conversation: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string', example: '64d1f4c9e1b44a0012345683' },
+          participants: {
+            type: 'array',
+            items: { type: 'string' },
+            example: ['64d1f4c9e1b44a0012345678', '64d1f4c9e1b44a0012345690']
+          },
+          participantsKey: {
+            type: 'string',
+            example: '64d1f4c9e1b44a0012345678:64d1f4c9e1b44a0012345690',
+            description: 'Chiave unica normalizzata della coppia di partecipanti'
+          },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      ConversationWithUsers: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string', example: '64d1f4c9e1b44a0012345683' },
+          participants: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                _id: { type: 'string' },
+                username: { type: 'string' },
+                name: { type: 'string' },
+                surname: { type: 'string' },
+                role: { type: 'array', items: { type: 'string' } }
+              }
+            }
+          },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      Message: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string', example: '64d1f4c9e1b44a0012345684' },
+          conversationId: { type: 'string', example: '64d1f4c9e1b44a0012345683' },
+          senderId: { type: 'string', example: '64d1f4c9e1b44a0012345678' },
+          text: { type: 'string', example: 'Ciao, quando possiamo iniziare?' },
+          isRead: { type: 'boolean', example: false },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      MessageWithSender: {
+        type: 'object',
+        properties: {
+          _id: { type: 'string', example: '64d1f4c9e1b44a0012345684' },
+          conversationId: { type: 'string', example: '64d1f4c9e1b44a0012345683' },
+          senderId: {
+            type: 'object',
+            properties: {
+              _id: { type: 'string' },
+              username: { type: 'string' },
+              name: { type: 'string' },
+              surname: { type: 'string' },
+              role: { type: 'array', items: { type: 'string' } }
+            }
+          },
+          text: { type: 'string', example: 'Ciao, quando possiamo iniziare?' },
+          isRead: { type: 'boolean', example: false },
+          createdAt: { type: 'string', format: 'date-time' },
+          updatedAt: { type: 'string', format: 'date-time' }
+        }
+      },
+      SendMessageRequest: {
+        type: 'object',
+        required: ['text'],
+        properties: {
+          text: { type: 'string', minLength: 1, maxLength: 1000, example: 'Ciao, quando possiamo iniziare?' }
+        }
+      },
+      MessagesResponse: {
+        type: 'object',
+        properties: {
+          messages: {
+            type: 'array',
+            items: { $ref: '#/components/schemas/MessageWithSender' }
+          },
+          pagination: {
+            type: 'object',
+            properties: {
+              page: { type: 'integer', example: 1 },
+              limit: { type: 'integer', example: 30 },
+              total: { type: 'integer', example: 120 },
+              pages: { type: 'integer', example: 4 }
+            }
+          }
         }
       },
       Error: {
@@ -707,6 +805,189 @@ const swaggerDefinition = {
         parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
         responses: {
           '200': { description: 'Recensione eliminata' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+    '/api/v1/chats/conversations': {
+      get: {
+        tags: ['Chats'],
+        summary: 'Recupera tutte le conversazioni dell\'utente autenticato',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'Conversazioni recuperate con successo',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    conversations: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/ConversationWithUsers' }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' }
+        }
+      }
+    },
+    '/api/v1/chats/conversations/with/{peerUserId}': {
+      post: {
+        tags: ['Chats'],
+        summary: 'Crea o ottiene una conversazione privata con un peer',
+        description: 'Apre una chat privata 1:1 tra l\'utente autenticato e il peer specificato. Richiede almeno una prenotazione accettata tra tutor e studente. La conversazione viene creata una sola volta per coppia di utenti e rimane disponibile anche se lo stato della prenotazione cambia.',
+        security: [{ bearerAuth: [] }],
+        parameters: [{
+          name: 'peerUserId',
+          in: 'path',
+          required: true,
+          schema: { type: 'string', example: '64d1f4c9e1b44a0012345690' },
+          description: 'ID dell\'altro utente con cui aprire la chat'
+        }],
+        responses: {
+          '200': {
+            description: 'Conversazione disponibile o creata con successo',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string', example: 'Conversazione disponibile.' },
+                    conversation: { $ref: '#/components/schemas/Conversation' }
+                  }
+                }
+              }
+            }
+          },
+          '400': {
+            description: 'Identificatori mancanti o peer coincide con l\'utente',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } }
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': {
+            description: 'Chat non consentita: serve almeno una prenotazione accettata tra tutor e studente',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } }
+          }
+        }
+      }
+    },
+    '/api/v1/chats/conversations/{conversationId}/messages': {
+      get: {
+        tags: ['Chats'],
+        summary: 'Recupera i messaggi di una conversazione con paginazione',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: 'conversationId',
+            in: 'path',
+            required: true,
+            schema: { type: 'string', example: '64d1f4c9e1b44a0012345683' },
+            description: 'ID della conversazione'
+          },
+          {
+            name: 'page',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, default: 1 },
+            description: 'Numero di pagina (default: 1)'
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, maximum: 100, default: 30 },
+            description: 'Numero di messaggi per pagina (default: 30, max: 100)'
+          }
+        ],
+        responses: {
+          '200': {
+            description: 'Messaggi recuperati con paginazione',
+            content: {
+              'application/json': {
+                schema: { $ref: '#/components/schemas/MessagesResponse' }
+              }
+            }
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' }
+        }
+      },
+      post: {
+        tags: ['Chats'],
+        summary: 'Invia un messaggio in una conversazione',
+        security: [{ bearerAuth: [] }],
+        parameters: [{
+          name: 'conversationId',
+          in: 'path',
+          required: true,
+          schema: { type: 'string', example: '64d1f4c9e1b44a0012345683' },
+          description: 'ID della conversazione'
+        }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/SendMessageRequest' }
+            }
+          }
+        },
+        responses: {
+          '201': {
+            description: 'Messaggio inviato con successo',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string', example: 'Messaggio inviato con successo.' },
+                    data: { $ref: '#/components/schemas/MessageWithSender' }
+                  }
+                }
+              }
+            }
+          },
+          '400': {
+            description: 'Testo mancante o supera limite 1000 caratteri',
+            content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } }
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { $ref: '#/components/responses/Forbidden' },
+          '404': { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+    '/api/v1/chats/conversations/{conversationId}/read': {
+      patch: {
+        tags: ['Chats'],
+        summary: 'Segna tutti i messaggi ricevuti della conversazione come letti',
+        security: [{ bearerAuth: [] }],
+        parameters: [{
+          name: 'conversationId',
+          in: 'path',
+          required: true,
+          schema: { type: 'string', example: '64d1f4c9e1b44a0012345683' },
+          description: 'ID della conversazione'
+        }],
+        responses: {
+          '200': {
+            description: 'Messaggi segnati come letti',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    message: { type: 'string', example: 'Messaggi segnati come letti.' },
+                    updatedCount: { type: 'integer', example: 5, description: 'Numero di messaggi aggiornati' }
+                  }
+                }
+              }
+            }
+          },
           '401': { $ref: '#/components/responses/Unauthorized' },
           '403': { $ref: '#/components/responses/Forbidden' },
           '404': { $ref: '#/components/responses/NotFound' }
