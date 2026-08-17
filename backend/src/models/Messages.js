@@ -22,4 +22,8 @@ const messageSchema = new mongoose.Schema({
     },
 },{timestamps: true});
 
+// Indici per ottimizzare le query
+messageSchema.index({ conversationId: 1, createdAt: -1 });
+messageSchema.index({ conversationId: 1, isRead: 1 });
+
 module.exports = mongoose.model('Message' , messageSchema)
