@@ -5,9 +5,13 @@ Infine, viene configurata la connessione al database MongoDB e avviato il server
 
 const express= require('express');
 const cors= require('cors');
+const http = require('http'); 
+const { Server } = require('socket.io');
 const db= require('./config/db');
 const app= express();
 const cookieParser= require('cookie-parser');
+const chatSocketAuth = require('./middlewares/chatSocketAuth');
+const { registerChatSocket } = require('./sockets/chatSocket');
 // Prendo i dati dalle variabili d'ambiente definite nel file .env
 require('dotenv').config();
 const PORT= process.env.PORT || 3000;
@@ -33,14 +37,18 @@ const swaggerUi = require('swagger-ui-express'); // Importo il modulo swagger-ui
 const swaggerSpec = require('./swagger'); // swaggerSpec è il file che contiene la documentazione dell'API in formato OpenAPI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Configuro il server HTTP e Socket.IO per gestire le connessioni in tempo reale
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
+    cors: corsOptions
+});
+// Configuro il middleware di autenticazione per le connessioni Socket.IO
+io.use(chatSocketAuth);
+registerChatSocket(io);
+
 
 // Configuro la connessione al database MongoDB utilizzando la funzione connectDB di db.js 
 db.connectDB();
-// Avvio il server sulla porta specificata nelle variabili d'ambiente
-app.listen(PORT , () => {
-    console.log(`Il server è avviato su http://localhost:${PORT}`);
-    console.log(`La documentazione dell'API è disponibile su http://localhost:${PORT}/api-docs`);
-});
 
 // Gestisco le rotte non trovate con un middleware che restituisce un messaggio di errore in formato JSON
 app.use((req, res) => {
@@ -49,4 +57,10 @@ app.use((req, res) => {
         message: `La rotta ${req.originalUrl} non è stata trovata sul server!`
     });
 }); 
+
+// Avvio il server sulla porta specificata nelle variabili d'ambiente
+httpServer.listen(PORT , () => {
+    console.log(`Il server è avviato su http://localhost:${PORT}`);
+    console.log(`La documentazione dell'API è disponibile su http://localhost:${PORT}/api-docs`);
+});
 
