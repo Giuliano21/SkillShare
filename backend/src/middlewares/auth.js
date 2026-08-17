@@ -10,19 +10,42 @@ errore 403 Forbidden.*/
 const tokenService = require('../services/tokenServices');
 const User = require('../models/User');
 
+// Funzione per estrarre il token JWT dalla richiesta
+function extractTokenFromRequest(req) {
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    if (authHeader && authHeader.startsWith('Bearer '))  return authHeader.split(' ')[1];
+    
+    if (req.query.token) return req.query.token;
+
+    return null;
+}
+
+// Funzione per ottenere le informazioni dell'utente dal token di accesso
+async function getUserFromAccessToken(token) {
+    /* Decodifica il token di accesso utilizzando il servizio tokenService e
+    ottiene l'ID dell'utente dal payload del token */
+    const decoded = tokenService.verifyAccessToken(token);
+    const userDoc = await User.findById(decoded.userId);
+
+    if (!userDoc) {
+        const error = new Error('L\'utente associato a questo token non esiste più. Effettua nuovamente il login.');
+        error.code = 'USER_NOT_FOUND';
+        throw error;
+    }
+    // Restituisce un oggetto contenente le informazioni dell'utente, inclusi l'ID, il ruolo e lo username
+    return {
+        ...userDoc.toObject(),
+        _id: userDoc._id,
+        userId: userDoc._id,
+        role: userDoc.role
+    };
+}
+
+// Funzione middleware per verificare il token di accesso e autenticare l'utente
 async function verifyToken(req, res, next) {
    
-    let token = null;
-    const authHeader = req.headers.authorization || req.headers.Authorization; // Recupera l'header di autorizzazione dalla richiesta
-    // Authorization : Bearer <token>
-    // Controlla se il token è presente nell'header di autorizzazione e verifica che il token inizi con "Bearer"
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-        token = authHeader.split(' ')[1]; // Estrae il token dall'header, dividendo la stringa in base allo spazio e prendendo il secondo elemento dell'array risultante
-    } else if (req.query.token) {
-        token = req.query.token; // Estrae il token dai parametri della query dell'URL, se presente
-    }
+    const token = extractTokenFromRequest(req);
 
-    // Se il token non è presente, restituisce un errore 401 Unauthorized con un messaggio che indica che l'utente deve effettuare il login per accedere alla risorsa protetta
     if (!token) {
         return res.status(401).json({
             status: 'fail',
@@ -31,24 +54,7 @@ async function verifyToken(req, res, next) {
     }
 
     try {
-        // Verifica il token utilizzando la funzione verifyAccessToken del servizio tokenService e decodifica le informazioni dell'utente
-        const decoded = tokenService.verifyAccessToken(token);
-
-        // Verifica se l'utente esiste nel database utilizzando l'ID dell'utente decodificato dal token
-        const userDoc = await User.findById(decoded.userId);
-        if (!userDoc) {
-            return res.status(401).json({
-                status: 'fail',
-                message: 'L\'utente associato a questo token non esiste più. Effettua nuovamente il login.'
-            });
-        }
-
-        req.user = {
-            ...userDoc.toObject(),
-            _id: userDoc._id,
-            userId: userDoc._id,
-            role: userDoc.role
-        };
+        req.user = await getUserFromAccessToken(token);
         next(); // Chiama il middleware o il controller successivo
     }
     catch(error){
@@ -60,7 +66,7 @@ async function verifyToken(req, res, next) {
         });
     }
 }
-
+// Funzione middleware per limitare l'accesso a determinate rotte in base ai ruoli degli utenti
 function restrictTo(roles){
     return (req, res, next) => {
         const userRoles = Array.isArray(req.user.role) ? req.user.role : [req.user.role];
@@ -77,5 +83,4 @@ function restrictTo(roles){
     };
 }
 
-
-module.exports = { verifyToken, restrictTo };
+module.exports = { verifyToken, restrictTo, extractTokenFromRequest, getUserFromAccessToken };
