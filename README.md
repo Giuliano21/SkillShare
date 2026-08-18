@@ -266,7 +266,292 @@ Contiene i singoli messaggi della chat:
 project-root/
 ├── frontend/
 │   ├── public/
+# Progetto piattaforma tutor-studente
+
+## Descrizione del progetto
+
+Il progetto consiste nella realizzazione di una piattaforma web che permetta a studenti e tutor di comunicare in modo semplice ed efficace. L'obiettivo principale è offrire agli studenti uno strumento per: cercare tutor filtrandoli per materia, prezzo, valutazione e altre opzioni; prenotare una lezione con un tutor e chattare a vicenda; scrivere recensioni verso i tutor con cui gli studenti hanno svolto una prenotazione.
+
+Dal punto di vista tecnico, l'applicazione è una **Single Page Application** con client-side rendering, con un frontend in React, un backend in Node.js + Express e un database MongoDB in cloud. Sono state implementate anche API autenticate, login lato frontend e, l'uso di Socket.IO per la chat tra studenti e tutor.
+
+## Obiettivi del progetto
+
+La piattaforma deve soddisfare questi obiettivi principali:
+
+- Permettere la registrazione e il login degli utenti.
+- Distinguere tra utente studente e utente tutor tramite ruoli applicativi.
+- Consentire la ricerca dei tutor tramite filtri.
+- Mostrare schede tutor con informazioni utili alla scelta.
+- Consentire a uno studente autenticato di aprire una chat privata con un tutor.
+- Consentire allo studente di prenotare una lezione scegliendo uno slot libero del tutor.
+- Consentire allo studente di lasciare una recensione dopo l'esperienza con il tutor.
+- Consentire al tutor di gestire disponibilità, accettare o disdire prenotazioni.
+- Consentire all'utente di effettuare logout ed eliminare il proprio account.
+
+## Funzionalità principali
+
+### 1. Home page
+
+La home page rappresenta il punto di accesso principale alla piattaforma e deve contenere gli elementi chiave dell'esperienza iniziale dell'utente.
+
+Componenti previsti:
+
+- Navbar con logo del sito.
+- Barra di ricerca tutor.
+- Bottone di login.
+- Bottone “Diventa tutor”.
+- Sezione principale con carosello di tutor in evidenza.
+
+### 2. Card tutor
+
+Ogni tutor mostrato nella home o nella pagina risultati deve essere rappresentato tramite una card contenente:
+
+- Nome e cognome.
+- Numero di stelle o valutazione media.
+- Numero di recensioni.
+- Breve descrizione personale.
+- Prezzo orario.
+- Eventuale materia principale insegnata.
+- Pulsante per visualizzare il profilo.
+- Pulsante per avviare la chat.
+- Pulsante per prenotare una lezione.
+
+### 3. Registrazione e login
+
+La piattaforma deve prevedere un sistema di autenticazione sicura: sessioni basate su JWT e passsword criptate.
+
+La soluzione consigliata per questo progetto è:
+
+- Registrazione unica dell'account.
+- Login unico per tutti gli utenti.
+- Possibilità, in fase di registrazione oppure successivamente, di diventare tutor.
+- Profilo tutor separato dai dati generali dell'utente.
+
+### 4. Profilo tutor
+
+Un utente autenticato può completare il proprio profilo tutor inserendo:
+
+- Materie insegnate.
+- Prezzo orario.
+- Breve biografia.
+- Livello di istruzione o qualifiche.
+- Disponibilità settimanale.
+- Slot di orari liberi prenotabili.
+- Eventuale modalità di lezione (remoto o in presenza).
+
+Il tutor deve anche avere un'area personale in cui:
+
+- Visualizzare le proprie prenotazioni.
+- Accettare una prenotazione.
+- Disdire una prenotazione.
+- Aggiornare i propri orari disponibili.
+
+### 5. Ricerca e filtri
+
+Gli studenti devono poter cercare tutor per:
+
+- Materia.
+- Prezzo minimo/massimo.
+- Modalità della lezione.
+- Valutazione media.
+- Disponibilità.
+
+La barra di ricerca nella navbar può servire per una ricerca rapida, mentre una pagina dedicata ai tutor può includere filtri più completi.
+
+### 6. Chat privata studente-tutor
+
+La chat deve essere disponibile solo agli utenti autenticati usando Socket.IO . 
+
+Funzionalità minime della chat:
+
+- Apertura conversazione tra studente e tutor.
+- Invio e ricezione messaggi in tempo reale.
+- Visualizzazione dello storico messaggi.
+- Accesso consentito solo agli utenti loggati.
+
+### 7. Prenotazione lezioni
+
+Lo studente autenticato deve poter prenotare una lezione con un tutor scegliendo uno slot libero tra quelli messi a disposizione dal tutor.
+
+Funzionalità previste:
+
+- Visualizzazione calendario o elenco slot disponibili del tutor.
+- Prenotazione di uno slot libero.
+- Stato della prenotazione: `pending`, `accepted`, `cancelled`, `completed`.
+- Visualizzazione prenotazioni future e passate nell'area utente.
+
+Lato tutor, devono essere previste le operazioni di:
+
+- Accettazione prenotazione.
+- Disdetta prenotazione.
+- Gestione disponibilità settimanali o giornaliere.
+- Blocco degli slot già prenotati per evitare doppie prenotazioni.
+
+### 8. Recensioni
+
+Lo studente deve poter scrivere una recensione per un tutor. La recensione può essere collegata a una lezione prenotata o completata, così da rendere il sistema più realistico e impedire recensioni arbitrarie.
+
+Ogni recensione deve includere:
+
+- Numero di stelle.
+- Testo recensione.
+- Data.
+- Studente autore.
+- Tutor destinatario.
+
+Il sistema deve aggiornare anche:
+
+- Media valutazioni del tutor.
+- Numero totale recensioni mostrate nelle card e nel profilo.
+
+### 9. Profilo utente
+
+Ogni utente deve avere una sezione profilo in cui può:
+
+- Visualizzare i propri dati.
+- Modificare alcune informazioni personali.
+- Effettuare il logout.
+- Eliminare il proprio account.
+
+L'eliminazione account deve essere protetta da conferma esplicita, perché comporta la rimozione o disattivazione del profilo e delle funzionalità associate.
+
+## Architettura del progetto
+
+Il progetto è organizzato in due sottocartelle principali: `frontend` e `backend` (da consegnare separatamente senza `node_modules`) . 
+
+### Frontend
+
+Il frontend deve essere realizzato con React. Per la navigazione tra le viste della SPA è opportuno usare React Router, mentre per gestire lo stato globale dell'autenticazione è utile usare Context API.
+
+Tecnologie consigliate lato frontend:
+
+- React.
+- React Router.
+- Context API.
+- Axios oppure Fetch per chiamare le API backend.
+- Material UI oppure CSS personalizzato per i componenti grafici.
+- Socket.IO client per la chat real-time.
+
+Per la parte delle prenotazioni, può essere utile integrare un componente calendario nel frontend, oppure iniziare con una lista di slot orari semplificata.
+
+### Backend
+
+Il backend deve essere sviluppato con Node.js ed Express. Dovrà esporre API REST per autenticazione, gestione utenti, tutor, recensioni, disponibilità, prenotazioni e conversazioni.
+
+Tecnologie consigliate lato backend:
+
+- Node.js.
+- Express.
+- MongoDB Atlas per il database cloud.
+- Mongoose per la modellazione dei dati.
+- bcrypt per hashing password.
+- JWT per l'autenticazione.
+- Socket.IO per la chat real-time.
+- Swagger per documentare le API.
+
+## Modello dati
+
+### Collezione `User`
+
+Contiene i dati comuni a tutti gli utenti:
+
+- `name`
+- `surname`
+- `username`
+- `email`
+- `password`
+- `role`
+- `status`
+- `createdAt`
+- `updatedAt`
+
+### Collezione `Tutor`
+
+Contiene le informazioni aggiuntive dei tutor:
+
+- `userId`
+- `subjects`
+- `hourlyPrice`
+- `bio`
+- `lessonMode`
+- `rating`
+- `reviewsCount`
+
+### Collezione `AvailabilitySlots`
+
+Contiene gli slot prenotabili dei tutor:
+
+- `tutorId`
+- `startDateTime`
+- `endDateTime`
+- `isBooked`
+- `createdAt`
+
+### Collezione `bookings`
+
+Contiene le prenotazioni delle lezioni:
+
+- `studentId`
+- `tutorId`
+- `slotId`
+- `status`
+- `subject`
+- `createdAt`
+- `updatedAt`
+
+### Collezione `reviews`
+
+Contiene le recensioni lasciate dagli studenti:
+
+- `studentId`
+- `tutorId`
+- `bookingId`
+- `rating`
+- `comment`
+- `createdAt`
+
+### Collezione `Conversations`
+
+Contiene le conversazioni tra utenti:
+
+- `participants`
+- `createdAt`
+- `updatedAt`
+
+### Collezione `Messages`
+
+Contiene i singoli messaggi della chat:
+
+- `conversationId`
+- `senderId`
+- `text`
+- `timestamp`
+- `isRead`
+
+## Struttura delle cartelle
+
+```text
+project-root/
+├── frontend/
+│   ├── public/
 │   ├── src/
+│   │   ├── assets/
+│   │   ├── components/
+│   │   │   ├── auth/
+│   │   │   ├── tutor/
+│   │   │   ├── booking/
+│   │   │   ├── review/
+│   │   │   ├── chat/
+│   │   │   └── profile/
+│   │   ├── pages/
+│   │   ├── context/
+│   │   ├── hooks/
+│   │   ├── services/
+│   │   ├── socket/
+│   │   ├── styles/
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── router.jsx
 │   │   ├── assets/
 │   │   ├── components/
 │   │   │   ├── auth/
@@ -287,7 +572,17 @@ project-root/
 │   ├── package.json
 │   └── .env
 ├── backend/
+│   └── .env
+├── backend/
 │   ├── src/
+│   │   ├── config/
+│   │   ├── models/
+│   │   ├── controllers/
+│   │   ├── routes/
+│   │   ├── middleware/
+│   │   ├── services/
+│   │   ├── sockets/
+│   │   └── server.js
 │   │   ├── config/
 │   │   ├── models/
 │   │   ├── controllers/
@@ -518,4 +813,3 @@ Per rendere il progetto corretto e credibile dal punto di vista tecnico è oppor
 - Swagger API.
 - UML casi d'uso.
 - Credenziali di test per la consegna.
-
