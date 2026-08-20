@@ -15,7 +15,7 @@ export const ProfilePage = () => {
         currentPassword: '',
         newPassword: ''
     });
-    const [message, setmessage] = useState('');
+    const [message, setMessage] = useState('');
     const [error, setError] = useState('');
 
     const {logout} = useAuth();

@@ -15,7 +15,7 @@ export const ProtectedRoute = ({children, allowedRoles = null }) => {
 
 // Check se l'utente è autorizzato in base al ruolo
     if(allowedRoles && !allowedRoles.includes(user.role)){
-        return <Navigate to="/authorized" replace />;
+        return <Navigate to="/unauthorized" replace />;
 
     }
 

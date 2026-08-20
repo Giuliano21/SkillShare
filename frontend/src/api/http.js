@@ -1,6 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-let accesToken = null;
+let accessToken = null;
 
 export const setAccessToken = (token) => {
     accessToken = token;
@@ -21,6 +21,7 @@ export const http = async (endpoint, options = {}) => {
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method,
+        headers,
         body: body ? JSON.stringify(body) : undefined,
         credentials: 'include',
         ...rest,

@@ -37,7 +37,7 @@ export const RegisterPage = () => {
                 delete body.hourlyPrice;
                 delete body.bio;
             }
-            await http('auth/register', {method:'POST', body});
+            await http('/auth/register', {method:'POST', body});
             navigate('/login');
         } catch (err) {
             setError(err.message);
