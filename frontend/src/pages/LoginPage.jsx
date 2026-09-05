@@ -1,11 +1,12 @@
-import {useState} from "react";
-import {useNavigate, Link} from "react-router-dom";
-import {useAuth} from "../context/AuthContext";
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/useAuth';
 
 export const LoginPage = () =>{
 // Ogni campo avrà il suo stato locale per gestire l'input dell'utente
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
 
     const {login, loading} = useAuth();
@@ -24,29 +25,5 @@ export const LoginPage = () =>{
         }
     };
 
-    return (
-        <form onSubmit={handleSubmit}>
-            <h2>Login</h2>
-            {error && <p style={{color: 'red'}}>{error}</p>}
-            <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-            />
-            <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-            />
-            {/* Disabilita il pulsante di submit se il login è in corso */}
-            <button type="submit" disabled={loading}>
-                {loading ? 'Caricamento...' : 'Accedi'}
-            </button>
-            <p>Non hai un account? <Link to="/register">Registrati</Link></p>
-        </form>
-    );
+    return <div className="auth-layout"><div className="auth-aside"><p className="eyebrow">Bentornato</p><h1>Il prossimo passo<br /><em>parte da qui.</em></h1><p>Riprendi il filo delle tue lezioni e continua a costruire qualcosa di tuo.</p></div><form className="form-card" onSubmit={handleSubmit}><p className="eyebrow">Accedi a SkillShare</p><h2>Entra nel tuo spazio</h2>{error && <p className="form-message error">{error}</p>}<label>Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required /></label><label>Password<input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} required /></label><label className="password-toggle"><input type="checkbox" checked={showPassword} onChange={(e) => setShowPassword(e.target.checked)} /> Mostra password</label><button className="button full" type="submit" disabled={loading}>{loading ? 'Accesso in corso...' : 'Accedi'}</button><p className="form-footer">Non hai un account? <Link to="/register">Registrati</Link></p></form></div>;
 }
