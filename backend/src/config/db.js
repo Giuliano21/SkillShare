@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const AvailabilitySlot = require('../models/AvailabilitySlot');
 require('dotenv').config();
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -6,6 +7,7 @@ const MONGODB_URI = process.env.MONGODB_URI;
 const connectDB = async () => {
     try {
         await mongoose.connect(MONGODB_URI);
+        await AvailabilitySlot.syncIndexes();
         console.log('Connesso al database MongoDB');
     }
     catch (error) {

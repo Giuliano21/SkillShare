@@ -9,6 +9,9 @@ async function register(req, res) {
         // Estrae i dati dell'utente dalla richiesta
         const { name, surname, username, email, password, role } = req.body;
         const roles = Array.isArray(role) ? role : (role ? [role] : ['student']);
+        if (roles.includes('tutor') && (Array.isArray(req.body.lessonMode) || !['remote', 'presence'].includes(req.body.lessonMode))) {
+            return res.status(400).json({ message: 'Selezionare una sola modalità di lezione' });
+        }
 
         // Verifica se l'utente esiste già nel database
         const existingUser = await User.findOne({ $or: [{ username }, { email }] }); // Controlla se esiste un utente con lo stesso username o email
@@ -18,22 +21,12 @@ async function register(req, res) {
         // Crea un nuovo utente e, se il ruolo è "tutor", crea anche un nuovo tutor associato all'utente
         const newUser = new User({ name, surname, username, email, password, role: roles });
         await newUser.save(); // Salva il nuovo utente nel database
-        // Restituisce una risposta di successo con i dati dell'utente appena creato
-        res.status(201).json({ 
-            message: 'Utente registrato con successo', 
-            user: {
-                id: newUser._id,
-                username: newUser.username,
-                email: newUser.email,
-            }
-        });
-
         if (roles.includes('tutor')) {
             // Se il ruolo dell'utente è "tutor", estrai ulteriori informazioni per i tutor
             const subjects = req.body.subjects || req.body.subject || [];
             const hourlyPrice = req.body.hourlyPrice;
             const bio = req.body.bio || '';
-            const lessonMode = req.body.lessonMode || 'remote';
+            const lessonMode = req.body.lessonMode;
 
             // Crea un nuovo tutor associato all'utente appena creato
             const newTutor = new Tutor({
@@ -44,14 +37,16 @@ async function register(req, res) {
                 lessonMode
             });
             await newTutor.save(); // Salva il nuovo tutor nel database
-            // Restituisce una risposta di successo con i dati del tutor appena creato
-            res.status(201).json({ 
-                message: 'Tutor registrato con successo', 
-                tutor: {
-                    id: newTutor._id
+        }
+
+            res.status(201).json({
+                message: roles.includes('tutor') ? 'Tutor registrato con successo' : 'Utente registrato con successo',
+                user: {
+                    id: newUser._id,
+                    username: newUser.username,
+                    email: newUser.email,
                 }
             });
-        }
     }
     catch(error){
         res.status(400).json({

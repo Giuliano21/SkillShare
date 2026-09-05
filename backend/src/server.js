@@ -18,9 +18,15 @@ const PORT= process.env.PORT || 3000;
 
 /* Configuro il middleware CORS per consentire le richieste da domini diversi, specificando i metodi consentiti,
 gli header consentiti, la possibilità di inviare cookie e le intestazioni esposte per la gestione dello streaming video e della paginazione. */
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
 const corsOptions = {
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], 
-    allowHeaders: ['Content-Type', 'Authorization'], 
+    allowedHeaders: ['Content-Type', 'Authorization'], 
     credentials: true ,   
 };
 app.use(cors(corsOptions));

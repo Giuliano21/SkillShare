@@ -27,7 +27,19 @@ async function getReviews(req, res) {
         res.status(200).json({ message: 'Recensioni recuperate con successo', reviews });
     }
     catch(err){
-        res.status(500).json({ message: 'Errore nel recupero delle recensioni', error: error.message })
+        res.status(500).json({ message: 'Errore nel recupero delle recensioni', error: err.message })
+    }
+}
+
+async function getMyReviews(req, res) {
+    try {
+        const reviews = await Review.find({ userId: req.user.userId })
+            .populate('tutorId', 'userId subjects')
+            .populate({ path: 'tutorId', populate: { path: 'userId', select: 'name surname username' } })
+            .populate('bookingId', 'subject status');
+        return res.status(200).json({ reviews });
+    } catch (err) {
+        return res.status(500).json({ message: 'Errore nel recupero delle tue recensioni', error: err.message });
     }
 }
 
@@ -117,6 +129,7 @@ async function deleteReview(req, res) {
 
 module.exports = {
     getReviews,
+    getMyReviews,
     createReview,
     updateReview,
     deleteReview

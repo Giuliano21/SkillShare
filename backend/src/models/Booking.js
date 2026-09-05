@@ -17,6 +17,10 @@ const bookingSchema = new mongoose.Schema({
         required: true,
         unique: true // In questo modo, ogni slot può essere prenotato solo una volta, evitando conflitti di prenotazione.
     },
+    slotIds: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Slot'
+    }],
     subject: {
         type: String,
         required: true

@@ -9,6 +9,8 @@ const ReviewController = require('../controllers/reviewController');
 // Importo il middleware per verificare il token JWT e proteggere le rotte che richiedono autenticazione
 const auth = require('../middlewares/auth');
 
+// Rotta per visualizzare le recensioni scritte dall'utente autenticato
+router.get('/me', auth.verifyToken, auth.restrictTo(['student']), ReviewController.getMyReviews);
 // Rotta per visualizzare tutte le recensioni di un tutor specifico, identificato dall'ID del tutor nella URL
 router.get('/:tutorId', ReviewController.getReviews);
 // Rotta per creare una nuova recensione

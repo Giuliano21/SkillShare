@@ -22,7 +22,7 @@ async function getAllTutors(req, res) {
         // Filtro per modalità di lezione (remota o in presenza)
         if (lessonMode)  filter.lessonMode = lessonMode;
 
-        const query = await Tutor.find(filter).populate('userId', 'name surname'); 
+        let query = Tutor.find(filter).populate('userId', 'name surname');
         
         // Ordinamento dei risultati in base al parametro di ordinamento specificato nella query
         if(sort === 'subject') {
@@ -33,9 +33,11 @@ async function getAllTutors(req, res) {
             query= query.sort({ rating: -1 });
         } else if(sort === 'lessonMode') {
             query= query.sort({ lessonMode: 1 });
+        } else if (sort === 'newest') {
+            query = query.sort({ createdAt: -1 });
         }
         
-        const tutors= await query;
+        const tutors = await query;
         res.status(200).json({ message: 'Tutor trovati', tutors });
     }
     catch(err){
@@ -59,6 +61,35 @@ async function getTutorById(req, res) {
     }
 }
 
+    async function getMyTutor(req, res) {
+        try {
+            const tutor = await Tutor.findOne({ userId: req.user._id }).populate('userId', 'name surname username');
+            if (!tutor) return res.status(404).json({ message: 'Profilo tutor non trovato' });
+            res.status(200).json({ tutor });
+        } catch (err) {
+            res.status(500).json({ message: 'Errore nel recupero del profilo tutor', error: err.message });
+        }
+    }
+
+async function updateMyTutor(req, res) {
+    try {
+        const { subjects, hourlyPrice, bio, lessonMode } = req.body;
+        if (lessonMode !== undefined && !['remote', 'presence'].includes(lessonMode)) {
+            return res.status(400).json({ message: 'Modalità di lezione non valida' });
+        }
+        const tutor = await Tutor.findOne({ userId: req.user._id });
+        if (!tutor) return res.status(404).json({ message: 'Profilo tutor non trovato' });
+        if (subjects !== undefined) tutor.subjects = Array.isArray(subjects) ? subjects : subjects.split(',').map((item) => item.trim()).filter(Boolean);
+        if (hourlyPrice !== undefined) tutor.hourlyPrice = hourlyPrice;
+        if (bio !== undefined) tutor.bio = bio;
+        if (lessonMode !== undefined) tutor.lessonMode = lessonMode;
+        await tutor.save();
+        return res.status(200).json({ message: 'Profilo tutor aggiornato', tutor });
+    } catch (err) {
+        return res.status(400).json({ message: 'Errore nell\'aggiornamento del profilo tutor', error: err.message });
+    }
+}
+
 // Funzione per ottenere le disponibilità orarie di un tutor specifico in base al suo ID
 async function getTutorAvailability(req, res) {
     try{
@@ -76,14 +107,18 @@ async function addTutorAvailability(req, res) {
     try{
         const tutorId = req.params.id;
         const { startTime, endTime } = req.body;
-        const newAvailabilitySlot = new AvailabilitySlot({
-            tutorId: tutorId,
-            startTime: startTime,
-            endTime: endTime,
-            isBooked: false
-        });
-        await newAvailabilitySlot.save();
-        res.status(201).json({ message: 'Disponibilità del tutor aggiunta', availabilitySlot: newAvailabilitySlot });
+        const start = new Date(startTime);
+        const end = new Date(endTime);
+        const durationHours = (end - start) / (60 * 60 * 1000);
+        if (!startTime || !endTime || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || durationHours < 1 || !Number.isInteger(durationHours)) {
+            return res.status(400).json({ message: 'Intervallo di disponibilità non valido' });
+        }
+        const slots = [];
+        for (let slotStart = start; slotStart < end; slotStart = new Date(slotStart.getTime() + 60 * 60 * 1000)) {
+            slots.push({ tutorId, startTime: slotStart, endTime: new Date(slotStart.getTime() + 60 * 60 * 1000), isBooked: false });
+        }
+        const newAvailabilitySlots = await AvailabilitySlot.insertMany(slots);
+        res.status(201).json({ message: 'Disponibilità del tutor aggiunta', availabilitySlots: newAvailabilitySlots });
     }
     catch(err){
         res.status(500).json({ message: 'Errore durante l\'aggiunta della disponibilità del tutor', error: err.message });
@@ -94,16 +129,21 @@ async function addTutorAvailability(req, res) {
 async function updateTutorAvailability(req, res) {
     try{
         const availabilityId = req.params.id;
-        const { startDay, endDay , startTime, endTime } = req.body; 
+        const { startTime, endTime } = req.body;
 
         const availabilitySlot = await AvailabilitySlot.findById(availabilityId);
         if (!availabilitySlot) return res.status(404).json({ message: 'Disponibilità del tutor non trovata' });
+        const tutor = await Tutor.findOne({ _id: availabilitySlot.tutorId, userId: req.user._id });
+        if (!tutor) return res.status(403).json({ message: 'Non autorizzato' });
 
         // Aggiorna i campi della disponibilità con i nuovi valori forniti nella richiesta
-        availabilitySlot.startDay = startDay !== undefined ? startDay : availabilitySlot.startDay;
-        availabilitySlot.endDay = endDay !== undefined ? endDay : availabilitySlot.endDay;
-        availabilitySlot.startTime = startTime !== undefined ? startTime : availabilitySlot.startTime;
-        availabilitySlot.endTime = endTime !== undefined ? endTime : availabilitySlot.endTime;
+        const nextStart = startTime !== undefined ? new Date(startTime) : availabilitySlot.startTime;
+        const nextEnd = endTime !== undefined ? new Date(endTime) : availabilitySlot.endTime;
+        if (Number.isNaN(new Date(nextStart).getTime()) || Number.isNaN(new Date(nextEnd).getTime()) || (nextEnd - nextStart) !== 60 * 60 * 1000) {
+            return res.status(400).json({ message: 'Intervallo di disponibilità non valido' });
+        }
+        availabilitySlot.startTime = nextStart;
+        availabilitySlot.endTime = nextEnd;
 
         await availabilitySlot.save();
         res.status(200).json({ message: 'Disponibilità del tutor aggiornata', availabilitySlot });
@@ -113,10 +153,27 @@ async function updateTutorAvailability(req, res) {
     }
 }
 
+async function deleteTutorAvailability(req, res) {
+    try {
+        const slot = await AvailabilitySlot.findById(req.params.id);
+        if (!slot) return res.status(404).json({ message: 'Disponibilità non trovata' });
+        const tutor = await Tutor.findOne({ _id: slot.tutorId, userId: req.user._id });
+        if (!tutor) return res.status(403).json({ message: 'Non autorizzato' });
+        if (slot.isBooked) return res.status(400).json({ message: 'Non puoi eliminare uno slot prenotato' });
+        await slot.deleteOne();
+        return res.status(204).send();
+    } catch (err) {
+        return res.status(500).json({ message: 'Errore nella cancellazione della disponibilità', error: err.message });
+    }
+}
+
 module.exports = {
     getAllTutors,
     getTutorById,
+    getMyTutor,
+    updateMyTutor,
     getTutorAvailability,
     addTutorAvailability,
-    updateTutorAvailability
+    updateTutorAvailability,
+    deleteTutorAvailability
 }

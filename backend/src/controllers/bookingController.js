@@ -11,22 +11,28 @@ function hasRole(user, role) {
 
 async function createBooking(req, res) {
     try{
-        const { tutorId, slotId, subject } = req.body;
-        // Controlla se lo slot non sia già prenotato
-        const slot = await AvailabilitySlot.findOne({ _id: slotId, isBooked: false });
-        if(!slot) return res.status(400).json({ message: 'Lo slot selezionato non è disponibile' });
-
-        slot.isBooked = true; // Imposta lo slot come prenotato
-        await slot.save(); // Salva le modifiche allo slot nel database
-
         // Controlla se l'utente autenticato ha il ruolo di "student" prima di permettere la creazione della prenotazione
         if(!hasRole(req.user, 'student')) return res.status(403).json({ message: 'Solo gli studenti possono creare prenotazioni' });
+
+        const { tutorId, slotId, slotIds, subject } = req.body;
+        const selectedSlotIds = [...new Set(slotIds?.length ? slotIds : slotId ? [slotId] : [])];
+        if (!tutorId || !selectedSlotIds.length) return res.status(400).json({ message: 'Selezionare almeno uno slot' });
+        const slots = await AvailabilitySlot.find({ _id: { $in: selectedSlotIds }, tutorId, isBooked: false }).sort({ startTime: 1 });
+        if (slots.length !== selectedSlotIds.length) return res.status(400).json({ message: 'Uno o più slot non sono più disponibili' });
+        for (let index = 1; index < slots.length; index += 1) {
+            if (slots[index - 1].endTime.getTime() !== slots[index].startTime.getTime()) {
+                return res.status(400).json({ message: 'Gli slot selezionati devono essere consecutivi' });
+            }
+        }
+
+        await AvailabilitySlot.updateMany({ _id: { $in: selectedSlotIds }, isBooked: false }, { $set: { isBooked: true } });
 
         // Crea la prenotazione
         const newBooking = new Booking({
             userId: req.user._id,
             tutorId,
-            slotId,
+            slotId: slots[0]._id,
+            slotIds: slots.map((slot) => slot._id),
             subject,
             status: 'pending' // Imposta lo stato iniziale della prenotazione come "pending"
         });
@@ -55,9 +61,10 @@ async function getBookings(req, res) {
 
         // Recupera le prenotazioni dal database, popolando i campi studentId, tutorId e slotId con i dati corrispondenti
         const bookings = await Booking.find(query)
-        .populate('userId', 'username')
-        .populate('tutorId', 'lessonMode')
+        .populate('userId', 'username name surname')
+        .populate({ path: 'tutorId', select: 'lessonMode userId', populate: { path: 'userId', select: 'name surname username' } })
         .populate('slotId', 'date startTime endTime')
+        .populate('slotIds', 'date startTime endTime')
         .sort({ createdAt: -1 }); // Ordina le prenotazioni in ordine decrescente di data di creazione
 
         res.status(200).json({ bookings });
@@ -82,7 +89,7 @@ async function cancelBooking(req, res) {
         // Aggiorna lo stato della prenotazione a "cancelled" nel database, in modo da mantenere un record della prenotazione cancellata
         await booking.updateOne({ status: 'cancelled' });
         // Libera lo slot associato alla prenotazione, impostando isBooked a false
-        await AvailabilitySlot.findByIdAndUpdate(booking.slotId, { isBooked: false });
+        await AvailabilitySlot.updateMany({ _id: { $in: booking.slotIds?.length ? booking.slotIds : [booking.slotId] } }, { $set: { isBooked: false } });
 
         res.status(200).json({ message: 'Prenotazione cancellata con successo' });
     }
