@@ -1,8 +1,8 @@
+// userApi.js gestisce le chiamate API per le operazioni relative agli utenti, come il recupero e l'aggiornamento del profilo.
 import {http} from './http';
 
 export const getProfile = () => http('/users/profile');
 
-// Aggiornamento del profilo, solo i dati passati vengono aggiornati-altri invariati
 export const updateProfile = (data) => http('/users/profile', {
     method: 'PUT',
     body: data

@@ -1,3 +1,5 @@
+/* tutorApi.js gestisce le chiamate API per le operazioni relative ai tutor, come la ricerca,
+il recupero dei dettagli e la gestione della disponibilità. */
 import {http} from "./http";
 
 export const getAllTutors = (filters= {}) =>{
@@ -7,6 +9,9 @@ export const getAllTutors = (filters= {}) =>{
 };
 
 export const getTutorById = (id) => http(`/tutors/${id}`);
+
+export const getMyTutor = () => http('/tutors/me');
+export const updateMyTutor = (data) => http('/tutors/me', { method: 'PUT', body: data });
 
 export const getTutorAvailability = (id) => http(`/tutors/${id}/availability`);
 
@@ -19,3 +24,5 @@ export const updateTutorAvailability = (id, data) => http(`/tutors/${id}/availab
     method: 'PUT',
     body: data
 });
+
+export const deleteTutorAvailability = (id) => http(`/tutors/availability/${id}`, { method: 'DELETE' });

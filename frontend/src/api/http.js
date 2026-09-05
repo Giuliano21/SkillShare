@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1').replace(/\/$/, '');
 
 let accessToken = null;
 
@@ -19,18 +19,24 @@ export const http = async (endpoint, options = {}) => {
         headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const response = await fetch(`${API_BASE_URL}${normalizedEndpoint}`, {
         method,
         headers,
-        body: body ? JSON.stringify(body) : undefined,
+        body: body === undefined ? undefined : JSON.stringify(body),
         credentials: 'include',
         ...rest,
     });
 
+    const contentType = response.headers.get('content-type') || '';
+    const payload = contentType.includes('application/json')
+        ? await response.json()
+        : await response.text();
+
     if (!response.ok){
-        const error = await response.json();
-        throw new Error(error.message || "Errore API");
+        const message = typeof payload === 'object' ? payload.message : payload;
+        throw new Error(message || `Errore API (${response.status})`);
     }
 
-    return response.json();
+    return payload;
 };
