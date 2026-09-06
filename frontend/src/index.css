@@ -342,7 +342,10 @@
   border-radius: 50%;
   color: var(--green) !important;
   font-size: 1rem !important;
-  transition: background-color 0.2s, color 0.2s, transform 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    transform 0.2s;
 }
 .nav-icon-link:hover,
 .nav-icon-link.active {
