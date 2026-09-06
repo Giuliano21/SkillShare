@@ -86,6 +86,13 @@ async function cancelBooking(req, res) {
         if(booking.userId.toString() !== req.user._id.toString())
             return res.status(403).json({ message: 'Non sei autorizzato a cancellare questa prenotazione' });
 
+        if (booking.status === 'completed') {
+            return res.status(400).json({ message: 'Una prenotazione completata non può essere annullata' });
+        }
+        if (booking.status === 'cancelled') {
+            return res.status(400).json({ message: 'La prenotazione è già stata annullata' });
+        }
+
         // Aggiorna lo stato della prenotazione a "cancelled" nel database, in modo da mantenere un record della prenotazione cancellata
         await booking.updateOne({ status: 'cancelled' });
         // Libera lo slot associato alla prenotazione, impostando isBooked a false
@@ -115,6 +122,10 @@ async function updateBookingStatus(req, res) {
         const tutorProfile = await Tutor.findById(booking.tutorId).select('userId');
         if (!tutorProfile) {
             return res.status(404).json({ message: 'Profilo tutor della prenotazione non trovato' });
+        }
+
+        if (booking.status === 'completed') {
+            return res.status(400).json({ message: 'Una prenotazione completata non può essere modificata' });
         }
         
         // Verifica che l'utente autenticato sia il tutor associato alla prenotazione prima di permettere l'aggiornamento dello stato

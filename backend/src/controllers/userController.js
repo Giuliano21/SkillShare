@@ -15,6 +15,17 @@ async function getProfile(req, res) {
     }
 }
 
+    async function getPublicProfile(req, res) {
+        try {
+            const user = await User.findById(req.params.id).select('name surname username role status');
+            if (!user || user.status === 'deleted') return res.status(404).json({ message: 'Utente non trovato' });
+
+            res.status(200).json({ user });
+        } catch (error) {
+            res.status(500).json({ message: 'Errore nel recupero del profilo utente', error });
+        }
+    }
+
 // Funzione per aggiornare il profilo dell'utente autenticato
 async function updateProfile(req, res) {
     try{
@@ -89,6 +100,7 @@ async function deleteProfile(req, res) {
 
 module.exports = {
     getProfile,
+        getPublicProfile,
     updateProfile,
     deleteProfile
 }

@@ -1,4 +1,3 @@
 export default function LoadingSpinner() {
-    return <p className="loading">Caricamento...</p>;
+  return <p className="loading">Caricamento...</p>;
 }
-

@@ -288,6 +288,42 @@ Swagger disponibile su `http://localhost:3000/api-docs`
 npm start
 ```
 
+## Seed Database
+
+Per popolare il database con dati di esempio (10 tutor):
+
+### Primo Setup
+```bash
+npm run seed
+```
+
+Questo comando:
+1. Crea 10 utenti tutor con dati realistici
+2. Crea 10 profili tutor associati
+3. Inserisce materie, prezzi, valutazioni di esempio
+
+### Pulire il Database
+```bash
+npm run seed:clean
+```
+
+Elimina tutti gli utenti e tutor, poi puoi eseguire nuovamente `npm run seed`.
+
+### Tutor di Esempio
+Lo script crea automaticamente:
+- Marco Rossi - Matematica, Fisica (€25/h, remoto)
+- Giulia Bianchi - Inglese, Francese (€20/h, remoto)
+- Andrea Verdi - Italiano, Letteratura (€18/h, in presenza)
+- Francesca Neri - Chimica, Biologia (€22/h, in presenza)
+- Luca Ferrari - Matematica, Informatica (€28/h, remoto)
+- Elena Gallo - Spagnolo, Italiano (€19/h, remoto)
+- Roberto Moretti - Diritto, Economia (€24/h, in presenza)
+- Martina Colombo - Arte, Storia (€17/h, in presenza)
+- Paolo Rizzo - Tedesco, Inglese (€21/h, remoto)
+- Alessandra Conti - Fisica, Scienze (€23/h, remoto)
+
+**Credenziali di esempio**: Password universale `password123` per tutti i tutor creati.
+
 ## Documentazione
 
 - **OpenAPI/Swagger**: Disponibile su `/api-docs`

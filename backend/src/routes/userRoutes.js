@@ -18,5 +18,7 @@ router.route('/profile')
     .get(UserController.getProfile)
     .put(UserController.updateProfile)
     .delete(UserController.deleteProfile);
+
+router.get('/:id', UserController.getPublicProfile);
     
 module.exports = router;

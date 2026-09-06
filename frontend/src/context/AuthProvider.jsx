@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { http, setAccessToken, getAccessToken } from '../api/http';
-import { AuthContext } from './AuthContext';
+import { useState, useEffect } from "react";
+import { http, setAccessToken, getAccessToken } from "../api/http";
+import { AuthContext } from "./AuthContext";
 
 // AuthProvider è un componente che fornisce il contesto di autenticazione ai componenti figli.
 // Gestisce lo stato dell'utente, il caricamento e le funzioni di registrazione, login e logout.
@@ -12,13 +12,13 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const tryRefresh = async () => {
       try {
-        const data = await http('/auth/refresh', { method: 'POST' });
+        const data = await http("/auth/refresh", { method: "POST" });
         setAccessToken(data.accessToken);
-        
-        const profile = await http('/users/profile');
+
+        const profile = await http("/users/profile");
         setUser(profile.user);
       } catch (err) {
-        console.error('Nessuna sessione attiva:', err);
+        console.error("Nessuna sessione attiva:", err);
       } finally {
         setLoading(false);
       }
@@ -29,8 +29,8 @@ export const AuthProvider = ({ children }) => {
   const register = async (formData) => {
     setLoading(true);
     try {
-      const data = await http('/auth/register', {
-        method: 'POST',
+      const data = await http("/auth/register", {
+        method: "POST",
         body: formData,
       });
       return data;
@@ -42,8 +42,8 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     setLoading(true);
     try {
-      const data = await http('/auth/login', {
-        method: 'POST',
+      const data = await http("/auth/login", {
+        method: "POST",
         body: { email, password },
       });
       setAccessToken(data.accessToken);
@@ -56,9 +56,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await http('/auth/logout', { method: 'POST' });
+      await http("/auth/logout", { method: "POST" });
     } catch (err) {
-      console.error('Logout fallito:', err);
+      console.error("Logout fallito:", err);
     } finally {
       setAccessToken(null);
       setUser(null);

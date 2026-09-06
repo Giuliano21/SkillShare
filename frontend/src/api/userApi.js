@@ -2,6 +2,7 @@
 import {http} from './http';
 
 export const getProfile = () => http('/users/profile');
+export const getPublicProfile = (id) => http(`/users/${id}`);
 
 export const updateProfile = (data) => http('/users/profile', {
     method: 'PUT',
