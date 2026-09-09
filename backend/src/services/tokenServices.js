@@ -1,5 +1,6 @@
 /* tokenService gestisce la generazione e la verifica degli access token e dei refresh token*/
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 function generateAccessToken(user) {
     /* Genera un access token utilizzando il metodo sign di jsonwebtoken, includendo l'ID 
@@ -35,9 +36,15 @@ function verifyRefreshToken(token) {
     return jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
 }
 
+function hashRefreshToken(token) {
+    // Crea un hash del refresh token utilizzando l'algoritmo SHA-256 per garantire la sicurezza del token memorizzato nel database.
+    return crypto.createHash('sha256').update(token).digest('hex');
+}
+
 module.exports = {
     generateAccessToken,
     generateRefreshToken,
     verifyAccessToken,
-    verifyRefreshToken
+    verifyRefreshToken,
+    hashRefreshToken
 };
