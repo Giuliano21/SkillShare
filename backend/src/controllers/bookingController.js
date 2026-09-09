@@ -1,149 +1,260 @@
-const Booking = require('../models/Booking');
-const AvailabilitySlot = require('../models/AvailabilitySlot');
-const Tutor = require('../models/Tutor');
+const Booking = require("../models/Booking");
+const AvailabilitySlot = require("../models/AvailabilitySlot");
+const Tutor = require("../models/Tutor");
 
 // Funzione per verificare se un utente ha un determinato ruolo
 function hasRole(user, role) {
-    // Controlla se l'utente ha il ruolo specificato, considerando che il ruolo può essere un array o una singola stringa
-    const roles = Array.isArray(user?.role) ? user.role : [user?.role];
-    return roles.includes(role);
+  // Controlla se l'utente ha il ruolo specificato, considerando che il ruolo può essere un array o una singola stringa
+  const roles = Array.isArray(user?.role) ? user.role : [user?.role];
+  return roles.includes(role);
 }
 
 async function createBooking(req, res) {
-    try{
-        // Controlla se l'utente autenticato ha il ruolo di "student" prima di permettere la creazione della prenotazione
-        if(!hasRole(req.user, 'student')) return res.status(403).json({ message: 'Solo gli studenti possono creare prenotazioni' });
+  try {
+    // Controlla se l'utente autenticato ha il ruolo di "student" prima di permettere la creazione della prenotazione
+    if (!hasRole(req.user, "student"))
+      return res
+        .status(403)
+        .json({ message: "Solo gli studenti possono creare prenotazioni" });
 
-        const { tutorId, slotId, slotIds, subject } = req.body;
-        const selectedSlotIds = [...new Set(slotIds?.length ? slotIds : slotId ? [slotId] : [])];
-        if (!tutorId || !selectedSlotIds.length) return res.status(400).json({ message: 'Selezionare almeno uno slot' });
-        const slots = await AvailabilitySlot.find({ _id: { $in: selectedSlotIds }, tutorId, isBooked: false }).sort({ startTime: 1 });
-        if (slots.length !== selectedSlotIds.length) return res.status(400).json({ message: 'Uno o più slot non sono più disponibili' });
-        for (let index = 1; index < slots.length; index += 1) {
-            if (slots[index - 1].endTime.getTime() !== slots[index].startTime.getTime()) {
-                return res.status(400).json({ message: 'Gli slot selezionati devono essere consecutivi' });
-            }
+    const { tutorId, slotId, slotIds, subject } = req.body;
+    const selectedSlotIds = [
+      ...new Set(slotIds?.length ? slotIds : slotId ? [slotId] : []),
+    ];
+    if (!tutorId || !selectedSlotIds.length)
+      return res.status(400).json({ message: "Selezionare almeno uno slot" });
+    const slots = await AvailabilitySlot.find({
+      _id: { $in: selectedSlotIds },
+      tutorId,
+      isBooked: false,
+    }).sort({ startTime: 1 });
+    if (slots.length !== selectedSlotIds.length)
+      return res
+        .status(400)
+        .json({ message: "Uno o più slot non sono più disponibili" });
+    for (let index = 1; index < slots.length; index += 1) {
+      if (
+        slots[index - 1].endTime.getTime() !== slots[index].startTime.getTime()
+      ) {
+        return res
+          .status(400)
+          .json({ message: "Gli slot selezionati devono essere consecutivi" });
+      }
+    }
+    // Controlla se lo studente ha già una prenotazione in sospeso o accettata per lo stesso tutor
+    const existingBooking = await Booking.findOne({
+      userId: req.user._id,
+      tutorId,
+      status: { $in: ["pending", "accepted"] },
+    });
+    if (existingBooking) {
+      return res.status(400).json({
+        message: "Hai già una prenotazione in sospeso o accettata per questo tutor",
+      });
+    }
+    const claimedSlotIds = [];
+    let newBooking;
+    try {
+      for (const slot of slots) {
+        const claimedSlot = await AvailabilitySlot.findOneAndUpdate(
+          { _id: slot._id, tutorId, isBooked: false },
+          { $set: { isBooked: true } },
+          { new: true },
+        );
+        if (!claimedSlot) {
+          const error = new Error("Uno o più slot non sono più disponibili");
+          error.statusCode = 400;
+          throw error;
         }
+        claimedSlotIds.push(claimedSlot._id);
+      }
 
-        await AvailabilitySlot.updateMany({ _id: { $in: selectedSlotIds }, isBooked: false }, { $set: { isBooked: true } });
-
-        // Crea la prenotazione
-        const newBooking = new Booking({
-            userId: req.user._id,
-            tutorId,
-            slotId: slots[0]._id,
-            slotIds: slots.map((slot) => slot._id),
-            subject,
-            status: 'pending' // Imposta lo stato iniziale della prenotazione come "pending"
-        });
-        // Salva la nuova prenotazione nel database
-        await newBooking.save(); 
-
-        res.status(201).json({ message: 'Prenotazione creata con successo', booking: newBooking });
+      newBooking = new Booking({
+        userId: req.user._id,
+        tutorId,
+        slotId: slots[0]._id,
+        slotIds: slots.map((slot) => slot._id),
+        subject,
+        status: "pending",
+      });
+      await newBooking.save();
+    } catch (error) {
+      if (claimedSlotIds.length) {
+        await AvailabilitySlot.updateMany(
+          { _id: { $in: claimedSlotIds }, isBooked: true },
+          { $set: { isBooked: false } },
+        );
+      }
+      throw error;
     }
-    catch(err){
-        res.status(500).json({ message: 'Errore nella creazione della prenotazione', error: err.message });
-    }
+
+    res
+      .status(201)
+      .json({
+        message: "Prenotazione creata con successo",
+        booking: newBooking,
+      });
+  } catch (err) {
+    res
+      .status(err.statusCode || 500)
+      .json({
+        message: err.statusCode
+          ? err.message
+          : "Errore nella creazione della prenotazione",
+      });
+  }
 }
 
 async function getBookings(req, res) {
-    try{
-        // Se l'utente è un tutor, recupera le prenotazioni associate al suo ID, altrimenti recupera le prenotazioni associate all'ID dell'utente loggato
-        let query = { userId: req.user._id };
+  try {
+    // Se l'utente è un tutor, recupera le prenotazioni associate al suo ID, altrimenti recupera le prenotazioni associate all'ID dell'utente loggato
+    let query = { userId: req.user._id };
 
-        if (hasRole(req.user, 'tutor')) {
-            const tutorProfile = await Tutor.findOne({ userId: req.user._id }).select('_id');
-            if (!tutorProfile) {
-                return res.status(404).json({ message: 'Profilo tutor non trovato' });
-            }
-            query = { tutorId: tutorProfile._id };
-        }
-
-        // Recupera le prenotazioni dal database, popolando i campi studentId, tutorId e slotId con i dati corrispondenti
-        const bookings = await Booking.find(query)
-        .populate('userId', 'username name surname')
-        .populate({ path: 'tutorId', select: 'lessonMode userId', populate: { path: 'userId', select: 'name surname username' } })
-        .populate('slotId', 'date startTime endTime')
-        .populate('slotIds', 'date startTime endTime')
-        .sort({ createdAt: -1 }); // Ordina le prenotazioni in ordine decrescente di data di creazione
-
-        res.status(200).json({ bookings });
+    if (hasRole(req.user, "tutor")) {
+      const tutorProfile = await Tutor.findOne({ userId: req.user._id }).select(
+        "_id",
+      );
+      if (!tutorProfile) {
+        return res.status(404).json({ message: "Profilo tutor non trovato" });
+      }
+      query = { tutorId: tutorProfile._id };
     }
-    catch(err){
-        res.status(500).json({ message: 'Errore nel recupero delle prenotazioni', error: err.message });
-    }
+
+    // Recupera le prenotazioni dal database, popolando i campi studentId, tutorId e slotId con i dati corrispondenti
+    const bookings = await Booking.find(query)
+      .populate("userId", "username name surname")
+      .populate({
+        path: "tutorId",
+        select: "lessonMode userId",
+        populate: { path: "userId", select: "name surname username" },
+      })
+      .populate("slotId", "date startTime endTime")
+      .populate("slotIds", "date startTime endTime")
+      .sort({ createdAt: -1 }); // Ordina le prenotazioni in ordine decrescente di data di creazione
+
+    res.status(200).json({ bookings });
+  } catch (err) {
+    res
+      .status(500)
+      .json({
+        message: "Errore nel recupero delle prenotazioni",
+        error: err.message,
+      });
+  }
 }
 
 async function cancelBooking(req, res) {
-    // Lo studente può cancellare una prenotazione, liberando lo slot associato al tutor
-    try{
-        // Recupera l'ID della prenotazione dai parametri della richiesta e verifica che la prenotazione esista nel database
-        const bookingId = req.params.id;
-        const booking = await Booking.findById(bookingId);
-        if(!booking) return res.status(404).json({ message: 'Prenotazione non trovata' });
-        
-        // Verifica che l'utente autenticato sia lo studente associato alla prenotazione prima di permettere la cancellazione
-        if(booking.userId.toString() !== req.user._id.toString())
-            return res.status(403).json({ message: 'Non sei autorizzato a cancellare questa prenotazione' });
+  // Lo studente può cancellare una prenotazione, liberando lo slot associato al tutor
+  try {
+    // Recupera l'ID della prenotazione dai parametri della richiesta e verifica che la prenotazione esista nel database
+    const bookingId = req.params.id;
+    const booking = await Booking.findById(bookingId);
+    if (!booking)
+      return res.status(404).json({ message: "Prenotazione non trovata" });
 
-        if (booking.status === 'completed') {
-            return res.status(400).json({ message: 'Una prenotazione completata non può essere annullata' });
-        }
-        if (booking.status === 'cancelled') {
-            return res.status(400).json({ message: 'La prenotazione è già stata annullata' });
-        }
+    // Verifica che l'utente autenticato sia lo studente associato alla prenotazione prima di permettere la cancellazione
+    if (booking.userId.toString() !== req.user._id.toString())
+      return res
+        .status(403)
+        .json({
+          message: "Non sei autorizzato a cancellare questa prenotazione",
+        });
 
-        // Aggiorna lo stato della prenotazione a "cancelled" nel database, in modo da mantenere un record della prenotazione cancellata
-        await booking.updateOne({ status: 'cancelled' });
-        // Libera lo slot associato alla prenotazione, impostando isBooked a false
-        await AvailabilitySlot.updateMany({ _id: { $in: booking.slotIds?.length ? booking.slotIds : [booking.slotId] } }, { $set: { isBooked: false } });
-
-        res.status(200).json({ message: 'Prenotazione cancellata con successo' });
+    if (booking.status === "completed") {
+      return res
+        .status(400)
+        .json({
+          message: "Una prenotazione completata non può essere annullata",
+        });
     }
-    catch(err){
-        res.status(500).json({ message: 'Errore nella cancellazione della prenotazione', error: err.message });
+    if (booking.status === "cancelled") {
+      return res
+        .status(400)
+        .json({ message: "La prenotazione è già stata annullata" });
     }
+
+    // Aggiorna lo stato della prenotazione a "cancelled" nel database, in modo da mantenere un record della prenotazione cancellata
+    await booking.updateOne({ status: "cancelled" });
+    // Libera lo slot associato alla prenotazione, impostando isBooked a false
+    await AvailabilitySlot.updateMany(
+      {
+        _id: {
+          $in: booking.slotIds?.length ? booking.slotIds : [booking.slotId],
+        },
+      },
+      { $set: { isBooked: false } },
+    );
+
+    res.status(200).json({ message: "Prenotazione cancellata con successo" });
+  } catch (err) {
+    res
+      .status(500)
+      .json({
+        message: "Errore nella cancellazione della prenotazione",
+        error: err.message,
+      });
+  }
 }
 
 async function updateBookingStatus(req, res) {
-    // Il tutor può aggiornare lo stato di una prenotazione (ad esempio da "pending" a "accepted" o "completed")
-    try{
-        const bookingId = req.params.id;
-        const { status } = req.body;
+  // Il tutor può aggiornare lo stato di una prenotazione (ad esempio da "pending" a "accepted" o "completed")
+  try {
+    const bookingId = req.params.id;
+    const { status } = req.body;
 
-        // Verifica che lo status fornito non sia "cancelled", poiché solo lo studente può cancellare una prenotazione
-        const validStatus = ['pending', 'accepted', 'completed']; 
-        if (!validStatus.includes(status)) 
-            return res.status(400).json({ error: 'Stato non valido o non autorizzato per il tutor' });
+    // Verifica che lo status fornito non sia "cancelled", poiché solo lo studente può cancellare una prenotazione
+    const validStatus = ["pending", "accepted", "completed"];
+    if (!validStatus.includes(status))
+      return res
+        .status(400)
+        .json({ error: "Stato non valido o non autorizzato per il tutor" });
 
-        const booking = await Booking.findById(bookingId);
-        if(!booking) return res.status(404).json({ message: 'Prenotazione non trovata' });
+    const booking = await Booking.findById(bookingId);
+    if (!booking)
+      return res.status(404).json({ message: "Prenotazione non trovata" });
 
-        const tutorProfile = await Tutor.findById(booking.tutorId).select('userId');
-        if (!tutorProfile) {
-            return res.status(404).json({ message: 'Profilo tutor della prenotazione non trovato' });
-        }
-
-        if (booking.status === 'completed') {
-            return res.status(400).json({ message: 'Una prenotazione completata non può essere modificata' });
-        }
-        
-        // Verifica che l'utente autenticato sia il tutor associato alla prenotazione prima di permettere l'aggiornamento dello stato
-        if(tutorProfile.userId.toString() !== req.user._id.toString())
-            return res.status(403).json({ message: 'Non sei autorizzato ad aggiornare lo stato di questa prenotazione' });
-
-        // Aggiorna lo stato della prenotazione nel database
-        await booking.updateOne({ status });
-        res.status(200).json({ message: 'Stato della prenotazione aggiornato con successo' });
+    const tutorProfile = await Tutor.findById(booking.tutorId).select("userId");
+    if (!tutorProfile) {
+      return res
+        .status(404)
+        .json({ message: "Profilo tutor della prenotazione non trovato" });
     }
-    catch(err){
-        res.status(500).json({ message: 'Errore nell\'aggiornamento dello stato della prenotazione', error: err.message });
+
+    if (booking.status === "completed") {
+      return res
+        .status(400)
+        .json({
+          message: "Una prenotazione completata non può essere modificata",
+        });
     }
+
+    // Verifica che l'utente autenticato sia il tutor associato alla prenotazione prima di permettere l'aggiornamento dello stato
+    if (tutorProfile.userId.toString() !== req.user._id.toString())
+      return res
+        .status(403)
+        .json({
+          message:
+            "Non sei autorizzato ad aggiornare lo stato di questa prenotazione",
+        });
+
+    // Aggiorna lo stato della prenotazione nel database
+    await booking.updateOne({ status });
+    res
+      .status(200)
+      .json({ message: "Stato della prenotazione aggiornato con successo" });
+  } catch (err) {
+    res
+      .status(500)
+      .json({
+        message: "Errore nell'aggiornamento dello stato della prenotazione",
+        error: err.message,
+      });
+  }
 }
 
 module.exports = {
-    createBooking,
-    getBookings,
-    cancelBooking,
-    updateBookingStatus
-}
+  createBooking,
+  getBookings,
+  cancelBooking,
+  updateBookingStatus,
+};
