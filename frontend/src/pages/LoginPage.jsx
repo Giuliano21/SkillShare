@@ -9,7 +9,7 @@ export const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const { login, loading } = useAuth();
+  const { login, actionLoading } = useAuth();
   // Per indirizzare l'utente dopo il login
   const navigate = useNavigate();
 
@@ -42,7 +42,11 @@ export const LoginPage = () => {
       <form className="form-card" onSubmit={handleSubmit}>
         <p className="eyebrow">Accedi a SkillShare</p>
         <h2>Entra nel tuo spazio</h2>
-        {error && <p className="form-message error">{error}</p>}
+        {error && (
+          <p className="form-message error" role="alert">
+            { error ||"Credenziali non valide. Controlla email e password."}
+          </p>
+        )}
         <label>
           Email
           <input
@@ -69,8 +73,8 @@ export const LoginPage = () => {
           />{" "}
           Mostra password
         </label>
-        <button className="button full" type="submit" disabled={loading}>
-          {loading ? "Accesso in corso..." : "Accedi"}
+        <button className="button full" type="submit" disabled={actionLoading}>
+          {actionLoading ? "Accesso in corso..." : "Accedi"}
         </button>
         <p className="form-footer">
           Non hai un account? <Link to="/register">Registrati</Link>

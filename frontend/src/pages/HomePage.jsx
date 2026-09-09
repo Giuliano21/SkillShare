@@ -27,7 +27,12 @@ const TutorCard = ({ tutor, onChat, canChat }) => (
         <p>{tutor.subjects?.join(" · ") || "Materie non indicate"}</p>
         <div className="card-meta">
           <span>
-            {tutor.lessonMode === "presence" ? "In presenza" : "Remoto"}
+            {(Array.isArray(tutor.lessonMode)
+              ? tutor.lessonMode
+              : [tutor.lessonMode]
+            )
+              .map((mode) => (mode === "presence" ? "In presenza" : "Remoto"))
+              .join(" · ")}
           </span>
           <strong>{tutor.hourlyPrice} €/h</strong>
         </div>
@@ -61,7 +66,7 @@ export const HomePage = () => {
   const [bestTutors, setBestTutors] = useState([]);
   const [newTutors, setNewTutors] = useState([]);
   const [acceptedBookings, setAcceptedBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const openChat = async (peerUserId) => {
@@ -94,9 +99,12 @@ export const HomePage = () => {
   }, []);
 
   useEffect(() => {
+    if (!isStudent) {
+      return undefined;
+    }
     const timer = setTimeout(() => loadTutors({}), 0);
     return () => clearTimeout(timer);
-  }, [loadTutors]);
+  }, [isStudent, loadTutors]);
 
   useEffect(() => {
     if (!isStudent) return undefined;

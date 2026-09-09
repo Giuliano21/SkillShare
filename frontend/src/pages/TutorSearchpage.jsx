@@ -110,9 +110,14 @@ export const TutorSearchpage = () => {
                   <p>{tutor.subjects?.join(" · ")}</p>
                   <div className="card-meta">
                     <span>
-                      {tutor.lessonMode === "in-person"
-                        ? "In presenza"
-                        : "Remoto"}
+                      {(Array.isArray(tutor.lessonMode)
+                        ? tutor.lessonMode
+                        : [tutor.lessonMode]
+                      )
+                        .map((mode) =>
+                          mode === "presence" ? "In presenza" : "Remoto",
+                        )
+                        .join(" · ")}
                     </span>
                     <strong>{tutor.hourlyPrice} €/h</strong>
                   </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { http, setAccessToken, getAccessToken } from "../api/http";
+import { refreshToken } from "../api/authApi";
 import { AuthContext } from "./AuthContext";
 
 // AuthProvider è un componente che fornisce il contesto di autenticazione ai componenti figli.
@@ -8,12 +9,12 @@ import { AuthContext } from "./AuthContext";
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     const tryRefresh = async () => {
       try {
-        const data = await http("/auth/refresh", { method: "POST" });
-        setAccessToken(data.accessToken);
+        await refreshToken();
 
         const profile = await http("/users/profile");
         setUser(profile.user);
@@ -27,7 +28,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const register = async (formData) => {
-    setLoading(true);
+    setActionLoading(true);
     try {
       const data = await http("/auth/register", {
         method: "POST",
@@ -35,12 +36,12 @@ export const AuthProvider = ({ children }) => {
       });
       return data;
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
   const login = async (email, password) => {
-    setLoading(true);
+    setActionLoading(true);
     try {
       const data = await http("/auth/login", {
         method: "POST",
@@ -50,7 +51,7 @@ export const AuthProvider = ({ children }) => {
       setUser(data.user);
       return data;
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
@@ -68,6 +69,7 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     loading,
+    actionLoading,
     register,
     login,
     logout,

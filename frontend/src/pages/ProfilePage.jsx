@@ -22,7 +22,7 @@ export const ProfilePage = () => {
     subjects: "",
     hourlyPrice: "",
     bio: "",
-    lessonMode: "remote",
+    lessonMode: ["remote"],
   });
   const [showPasswords, setShowPasswords] = useState(false);
   const [message, setMessage] = useState("");
@@ -47,7 +47,9 @@ export const ProfilePage = () => {
             subjects: tutorData.tutor.subjects?.join(", ") || "",
             hourlyPrice: tutorData.tutor.hourlyPrice || "",
             bio: tutorData.tutor.bio || "",
-            lessonMode: tutorData.tutor.lessonMode || "remote",
+            lessonMode: Array.isArray(tutorData.tutor.lessonMode)
+              ? tutorData.tutor.lessonMode
+              : [tutorData.tutor.lessonMode || "remote"],
           });
         }
       } catch (err) {
@@ -183,21 +185,43 @@ export const ProfilePage = () => {
                   }
                 />
               </label>
-              <label>
-                Modalità
-                <select
-                  value={tutorForm.lessonMode}
-                  onChange={(event) =>
-                    setTutorForm({
-                      ...tutorForm,
-                      lessonMode: event.target.value,
-                    })
-                  }
-                >
-                  <option value="remote">Remoto</option>
-                  <option value="presence">In presenza</option>
-                </select>
-              </label>
+              <fieldset className="lesson-mode-fieldset">
+                <legend>Modalità</legend>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={tutorForm.lessonMode.includes("remote")}
+                    onChange={(event) =>
+                      setTutorForm({
+                        ...tutorForm,
+                        lessonMode: event.target.checked
+                          ? [...tutorForm.lessonMode, "remote"]
+                          : tutorForm.lessonMode.filter(
+                              (mode) => mode !== "remote",
+                            ),
+                      })
+                    }
+                  />{" "}
+                  Remoto
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={tutorForm.lessonMode.includes("presence")}
+                    onChange={(event) =>
+                      setTutorForm({
+                        ...tutorForm,
+                        lessonMode: event.target.checked
+                          ? [...tutorForm.lessonMode, "presence"]
+                          : tutorForm.lessonMode.filter(
+                              (mode) => mode !== "presence",
+                            ),
+                      })
+                    }
+                  />{" "}
+                  In presenza
+                </label>
+              </fieldset>
             </div>
             <label>
               Bio

@@ -213,7 +213,12 @@ export const TutorDetailPage = () => {
           <div className="section-heading">
             <h2>Orari disponibili</h2>
             <span>
-              {tutor.lessonMode === "presence" ? "In presenza" : "Remoto"}
+              {(Array.isArray(tutor.lessonMode)
+                ? tutor.lessonMode
+                : [tutor.lessonMode]
+              )
+                .map((mode) => (mode === "presence" ? "In presenza" : "Remoto"))
+                .join(" · ")}
             </span>
           </div>
           <div className="slot-list">

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { getMyBookings, updateBookingStatus } from "../api/bookingApi";
 import { getReviews } from "../api/reviewApi";
 import { getMyTutor, getTutorAvailability } from "../api/tutorApi";
+import { createOrGetConversation } from "../api/chatApi";
 
 export const TutorDashboardPage = () => {
   const [tutor, setTutor] = useState(null);
@@ -37,6 +38,17 @@ export const TutorDashboardPage = () => {
   const update = async (id, status) => {
     try {
       await updateBookingStatus(id, { status });
+      if (status === "accepted") {
+        const acceptedBooking = bookings.find((booking) => booking._id === id);
+        const peerUserId = acceptedBooking?.userId?._id;
+        if (peerUserId) {
+          try {
+            await createOrGetConversation(peerUserId);
+          } catch {
+            setMessage("Prenotazione accettata. Chat non ancora disponibile.");
+          }
+        }
+      }
       setMessage(
         status === "accepted"
           ? "Prenotazione accettata."

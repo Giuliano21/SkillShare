@@ -9,10 +9,21 @@ import { PublicProfilePage } from "../pages/PublicProfilePage";
 import { TutorSearchPage } from "../pages/TutorSearchpage";
 import { TutorDetailPage } from "../pages/TutorDetailPage";
 import { TutorAvailabilityPage } from "../pages/TutorAvailabilityPage";
+import { TutorDashboardPage } from "../pages/TutorDashboardPage";
 import { BookingsPage } from "../pages/BookingsPage";
 import { ChatPage } from "../pages/ChatPage";
 import { MyReviewsPage } from "../pages/MyReviewsPage";
-import { ProtectedRoute } from "./ProtectedRoute";
+import { GuestRoute, ProtectedRoute } from "./ProtectedRoute";
+
+const UnauthorizedPage = () => (
+  <div className="content-page narrow-page">
+    <p className="eyebrow">Accesso negato</p>
+    <h1>Non puoi entrare in questa pagina.</h1>
+    <p className="lead">
+      Il tuo ruolo non dispone dei permessi necessari per questa area.
+    </p>
+  </div>
+);
 
 export const AppRouter = () => {
   return (
@@ -21,8 +32,22 @@ export const AppRouter = () => {
         <Routes>
           <Route element={<App />}>
             <Route path="/" element={<HomePage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/login"
+              element={
+                <GuestRoute>
+                  <LoginPage />
+                </GuestRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <GuestRoute>
+                  <RegisterPage />
+                </GuestRoute>
+              }
+            />
             <Route
               path="/tutors/:id"
               element={
@@ -31,7 +56,14 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
-            <Route path="/tutors/search" element={<TutorSearchPage />} />
+            <Route
+              path="/tutors/search"
+              element={
+                <ProtectedRoute allowedRoles={["student"]}>
+                  <TutorSearchPage />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/profile"
               element={
@@ -53,6 +85,14 @@ export const AppRouter = () => {
               element={
                 <ProtectedRoute>
                   <BookingsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tutor/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={["tutor"]}>
+                  <TutorDashboardPage />
                 </ProtectedRoute>
               }
             />
@@ -80,6 +120,7 @@ export const AppRouter = () => {
                 </ProtectedRoute>
               }
             />
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
             <Route path="*" element={<HomePage />} />
           </Route>
         </Routes>

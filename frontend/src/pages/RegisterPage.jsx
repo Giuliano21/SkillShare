@@ -13,7 +13,7 @@ export const RegisterPage = () => {
     subjects: "",
     hourlyPrice: "",
     bio: "",
-    lessonMode: "remote",
+    lessonMode: ["remote"],
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -27,9 +27,20 @@ export const RegisterPage = () => {
       ...current,
       [event.target.name]: event.target.value,
     }));
+  const toggleLessonMode = (mode) =>
+    setFormData((current) => ({
+      ...current,
+      lessonMode: current.lessonMode.includes(mode)
+        ? current.lessonMode.filter((value) => value !== mode)
+        : [...current.lessonMode, mode],
+    }));
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+    if (formData.role === "tutor" && formData.lessonMode.length === 0) {
+      setError("Seleziona almeno una modalità di lezione.");
+      return;
+    }
     setLoading(true);
     try {
       const body = { ...formData };
@@ -186,25 +197,21 @@ export const RegisterPage = () => {
                   required
                 />
               </label>
-              <fieldset>
+              <fieldset className="lesson-mode-fieldset">
                 <legend>Modalità</legend>
                 <label>
                   <input
-                    type="radio"
-                    name="lessonMode"
-                    value="remote"
-                    checked={formData.lessonMode === "remote"}
-                    onChange={handleChange}
+                    type="checkbox"
+                    checked={formData.lessonMode.includes("remote")}
+                    onChange={() => toggleLessonMode("remote")}
                   />{" "}
                   Remoto
                 </label>
                 <label>
                   <input
-                    type="radio"
-                    name="lessonMode"
-                    value="presence"
-                    checked={formData.lessonMode === "presence"}
-                    onChange={handleChange}
+                    type="checkbox"
+                    checked={formData.lessonMode.includes("presence")}
+                    onChange={() => toggleLessonMode("presence")}
                   />{" "}
                   In presenza
                 </label>

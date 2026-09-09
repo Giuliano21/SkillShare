@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   cancelBooking,
   getMyBookings,
   updateBookingStatus,
 } from "../api/bookingApi";
+import { createOrGetConversation } from "../api/chatApi";
 import { useAuth } from "../context/AuthContext";
 
 export const BookingsPage = () => {
@@ -14,17 +15,34 @@ export const BookingsPage = () => {
   const [bookings, setBookings] = useState([]);
   const [message, setMessage] = useState("");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     const data = await getMyBookings();
-    setBookings(data.bookings || []);
-  };
+    const nextBookings = data.bookings || [];
+    setBookings(nextBookings);
+    if (!isTutor) {
+      await Promise.all(
+        nextBookings
+          .filter(
+            (booking) =>
+              booking.status === "accepted" && booking.tutorId?.userId?._id,
+          )
+          .map(async (booking) => {
+            try {
+              await createOrGetConversation(booking.tutorId.userId._id);
+            } catch {
+              // La prenotazione resta visibile anche se la chat non è disponibile.
+            }
+          }),
+      );
+    }
+  }, [isTutor]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       load().catch((error) => setMessage(error.message));
     }, 0);
     return () => clearTimeout(timer);
-  }, []);
+  }, [load]);
 
   const cancel = async (id) => {
     try {
@@ -39,6 +57,17 @@ export const BookingsPage = () => {
   const update = async (id, status) => {
     try {
       await updateBookingStatus(id, { status });
+      if (status === "accepted") {
+        const acceptedBooking = bookings.find((booking) => booking._id === id);
+        const peerUserId = acceptedBooking?.userId?._id;
+        if (peerUserId) {
+          try {
+            await createOrGetConversation(peerUserId);
+          } catch {
+            setMessage("Prenotazione accettata. Chat non ancora disponibile.");
+          }
+        }
+      }
       setMessage("Stato aggiornato.");
       await load();
     } catch (error) {
