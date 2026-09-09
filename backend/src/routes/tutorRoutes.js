@@ -2,27 +2,67 @@
 e la gestione delle disponibilità orarie.
 */
 
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 
 // Importo il controller per gestire le operazioni relative ai tutor
-const TutorController = require('../controllers/tutorController');
+const TutorController = require("../controllers/tutorController");
 
 // Importo il middleware per verificare il token JWT e proteggere le rotte che richiedono autenticazione
-const auth = require('../middlewares/auth');
+const auth = require("../middlewares/auth");
 
 // Ricerca dei tutor in base a criteri specifici (ad esempio, materia, disponibilità, ecc.)
-router.get('/' , TutorController.getAllTutors);
-router.get('/me', auth.verifyToken, auth.restrictTo(['tutor']), TutorController.getMyTutor);
-router.put('/me', auth.verifyToken, auth.restrictTo(['tutor']), TutorController.updateMyTutor);
+router.get(
+  "/",
+  auth.verifyToken,
+  auth.restrictTo(["student"]),
+  TutorController.getAllTutors,
+);
+router.get(
+  "/me",
+  auth.verifyToken,
+  auth.restrictTo(["tutor"]),
+  TutorController.getMyTutor,
+);
+router.put(
+  "/me",
+  auth.verifyToken,
+  auth.restrictTo(["tutor"]),
+  TutorController.updateMyTutor,
+);
 // Recupero le informazioni di un tutor specifico in base al suo ID
-router.get('/:id' , TutorController.getTutorById);
-// Aggiunta di nuove disponibilità orarie per un tutor in base al suo ID  
-router.post('/:id/availability', auth.verifyToken , auth.restrictTo(['tutor']) ,TutorController.addTutorAvailability);
+router.get(
+  "/:id",
+  auth.verifyToken,
+  auth.restrictTo(["student"]),
+  TutorController.getTutorById,
+);
+// Aggiunta di nuove disponibilità orarie per un tutor in base al suo ID
+router.post(
+  "/:id/availability",
+  auth.verifyToken,
+  auth.restrictTo(["tutor"]),
+  TutorController.addTutorAvailability,
+);
 // Recupero le disponibilità orarie di un tutor in base al suo ID
-router.get('/:id/availability', TutorController.getTutorAvailability);
-// Aggiornamento delle disponibilità orarie di un tutor in base al suo ID 
-router.put('/:id/availability', auth.verifyToken , auth.restrictTo(['tutor']) ,TutorController.updateTutorAvailability);
-router.delete('/availability/:id', auth.verifyToken, auth.restrictTo(['tutor']), TutorController.deleteTutorAvailability);
+router.get(
+  "/:id/availability",
+  auth.verifyToken,
+  auth.restrictTo(["student", "tutor"]),
+  TutorController.getTutorAvailability,
+);
+// Aggiornamento delle disponibilità orarie di un tutor in base al suo ID
+router.put(
+  "/:id/availability",
+  auth.verifyToken,
+  auth.restrictTo(["tutor"]),
+  TutorController.updateTutorAvailability,
+);
+router.delete(
+  "/availability/:id",
+  auth.verifyToken,
+  auth.restrictTo(["tutor"]),
+  TutorController.deleteTutorAvailability,
+);
 
 module.exports = router;
