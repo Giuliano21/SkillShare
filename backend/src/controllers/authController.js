@@ -70,6 +70,8 @@ async function login(req, res) {
    
     const accessToken = tokenService.generateAccessToken(user); // Genera un access token per l'utente
     const refreshToken = tokenService.generateRefreshToken(user); // Genera un refresh token per l'utente
+    user.refreshTokenHash = tokenService.hashRefreshToken(refreshToken); // Aggiunge al db l'hash del refresh token per la verifica futura
+    await user.save();
 
     res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
@@ -104,13 +106,36 @@ async function refresh(req, res) {
             return res.status(401).json({ message: 'Refresh token non valido o scaduto. Effettua nuovamente il login.' });
         }
 
-        // Trova l'utente nel database utilizzando l'ID decodificato dal refresh token.
-        const user = await User.findById(decoded.userId);
+        // Trova l'utente nel database utilizzando l'ID decodificato dal refresh token e verifica se l'hash del refresh token corrisponde a quello memorizzato nel database.  
+        const user = await User.findById(decoded.userId).select('+refreshTokenHash');
         if (!user) {
             return res.status(401).json({ message: 'Utente non trovato. Effettua nuovamente il login.' });
         }
 
-        // Genera un nuovo access token per l'utente.
+        const refreshTokenHash = tokenService.hashRefreshToken(refreshToken);
+        if (!user.refreshTokenHash || user.refreshTokenHash !== refreshTokenHash) {
+            res.clearCookie('refreshToken');
+            return res.status(401).json({ message: 'Refresh token revocato o già utilizzato. Effettua nuovamente il login.' });
+        }
+        // Genera un nuovo access token e un nuovo refresh token, aggiorna l'hash del refresh token nel database e invia il nuovo refresh token al client tramite cookie.
+        const rotatedRefreshToken = tokenService.generateRefreshToken(user);
+        const rotatedRefreshTokenHash = tokenService.hashRefreshToken(rotatedRefreshToken);
+        const updatedUser = await User.findOneAndUpdate(
+            { _id: user._id, refreshTokenHash },
+            { $set: { refreshTokenHash: rotatedRefreshTokenHash } },
+            { new: true }
+        );
+        if (!updatedUser) {
+            res.clearCookie('refreshToken');
+            return res.status(401).json({ message: 'Refresh token già utilizzato. Effettua nuovamente il login.' });
+        }
+
+        res.cookie('refreshToken', rotatedRefreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
         const newAccessToken = tokenService.generateAccessToken(user);
         return res.json({ accessToken: newAccessToken });
     } catch (error) {
@@ -120,6 +145,16 @@ async function refresh(req, res) {
 
 async function logout(req, res) {
     // Cancella il cookie del refresh token dal client, invalidando così la sessione dell'utente.
+    const refreshToken = req.cookies?.refreshToken;
+    if (refreshToken) {
+        try {
+            // Verifica il refresh token e rimuove l'hash del refresh token dal database per invalidare il token.
+            const decoded = tokenService.verifyRefreshToken(refreshToken);
+            await User.findByIdAndUpdate(decoded.userId, { $unset: { refreshTokenHash: 1 } });
+        } catch (error) {
+            // Il cookie viene comunque cancellato anche se è già scaduto o non valido.
+        }
+    }
     res.clearCookie('refreshToken', {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production', // Imposta il cookie come sicuro solo in produzione
