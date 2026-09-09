@@ -4,7 +4,7 @@ import { getAccessToken } from "./http";
 const SOCKET_URL = (
   import.meta.env.VITE_SOCKET_URL ||
   import.meta.env.VITE_API_URL ||
-  "http://localhost:3000/api/v1"
+  "http://localhost:4000/api/v1"
 ).replace(/\/api\/v1\/?$/, "");
 
 export const createChatSocket = () =>

@@ -1,6 +1,8 @@
 // API per l'autenticazione degli utenti, registrazione, login, logout e refresh del token di accesso.
 import { http, setAccessToken } from "./http";
 
+let refreshPromise = null;
+
 export const register = (data) =>
   http("/auth/register", {
     method: "POST",
@@ -28,13 +30,19 @@ export const logout = () =>
     return response;
   });
 
-export const refreshToken = () =>
-  http("/auth/refresh", {
-    method: "POST",
-  }).then((response) => {
-    // Salva il nuovo token di accesso
-    if (response.accessToken) {
-      setAccessToken(response.accessToken);
-    }
-    return response;
-  });
+export const refreshToken = () => {
+  if (!refreshPromise) {
+    refreshPromise = http("/auth/refresh", {
+      method: "POST",
+    })
+      .then((response) => {
+        if (response.accessToken) setAccessToken(response.accessToken);
+        return response;
+      })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+};
