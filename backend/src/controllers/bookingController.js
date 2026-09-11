@@ -49,7 +49,8 @@ async function createBooking(req, res) {
     });
     if (existingBooking) {
       return res.status(400).json({
-        message: "Hai già una prenotazione in sospeso o accettata per questo tutor",
+        message:
+          "Hai già una prenotazione in sospeso o accettata per questo tutor",
       });
     }
     const claimedSlotIds = [];
@@ -88,20 +89,16 @@ async function createBooking(req, res) {
       throw error;
     }
 
-    res
-      .status(201)
-      .json({
-        message: "Prenotazione creata con successo",
-        booking: newBooking,
-      });
+    res.status(201).json({
+      message: "Prenotazione creata con successo",
+      booking: newBooking,
+    });
   } catch (err) {
-    res
-      .status(err.statusCode || 500)
-      .json({
-        message: err.statusCode
-          ? err.message
-          : "Errore nella creazione della prenotazione",
-      });
+    res.status(err.statusCode || 500).json({
+      message: err.statusCode
+        ? err.message
+        : "Errore nella creazione della prenotazione",
+    });
   }
 }
 
@@ -134,12 +131,10 @@ async function getBookings(req, res) {
 
     res.status(200).json({ bookings });
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        message: "Errore nel recupero delle prenotazioni",
-        error: err.message,
-      });
+    res.status(500).json({
+      message: "Errore nel recupero delle prenotazioni",
+      error: err.message,
+    });
   }
 }
 
@@ -154,18 +149,14 @@ async function cancelBooking(req, res) {
 
     // Verifica che l'utente autenticato sia lo studente associato alla prenotazione prima di permettere la cancellazione
     if (booking.userId.toString() !== req.user._id.toString())
-      return res
-        .status(403)
-        .json({
-          message: "Non sei autorizzato a cancellare questa prenotazione",
-        });
+      return res.status(403).json({
+        message: "Non sei autorizzato a cancellare questa prenotazione",
+      });
 
     if (booking.status === "completed") {
-      return res
-        .status(400)
-        .json({
-          message: "Una prenotazione completata non può essere annullata",
-        });
+      return res.status(400).json({
+        message: "Una prenotazione completata non può essere annullata",
+      });
     }
     if (booking.status === "cancelled") {
       return res
@@ -187,12 +178,10 @@ async function cancelBooking(req, res) {
 
     res.status(200).json({ message: "Prenotazione cancellata con successo" });
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        message: "Errore nella cancellazione della prenotazione",
-        error: err.message,
-      });
+    res.status(500).json({
+      message: "Errore nella cancellazione della prenotazione",
+      error: err.message,
+    });
   }
 }
 
@@ -221,21 +210,17 @@ async function updateBookingStatus(req, res) {
     }
 
     if (booking.status === "completed") {
-      return res
-        .status(400)
-        .json({
-          message: "Una prenotazione completata non può essere modificata",
-        });
+      return res.status(400).json({
+        message: "Una prenotazione completata non può essere modificata",
+      });
     }
 
     // Verifica che l'utente autenticato sia il tutor associato alla prenotazione prima di permettere l'aggiornamento dello stato
     if (tutorProfile.userId.toString() !== req.user._id.toString())
-      return res
-        .status(403)
-        .json({
-          message:
-            "Non sei autorizzato ad aggiornare lo stato di questa prenotazione",
-        });
+      return res.status(403).json({
+        message:
+          "Non sei autorizzato ad aggiornare lo stato di questa prenotazione",
+      });
 
     // Aggiorna lo stato della prenotazione nel database
     await booking.updateOne({ status });
@@ -243,12 +228,10 @@ async function updateBookingStatus(req, res) {
       .status(200)
       .json({ message: "Stato della prenotazione aggiornato con successo" });
   } catch (err) {
-    res
-      .status(500)
-      .json({
-        message: "Errore nell'aggiornamento dello stato della prenotazione",
-        error: err.message,
-      });
+    res.status(500).json({
+      message: "Errore nell'aggiornamento dello stato della prenotazione",
+      error: err.message,
+    });
   }
 }
 
