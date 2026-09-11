@@ -1,8 +1,11 @@
 services:
   mongo:
     image: mongo:8
+    attach: false
     ports:
       - "27017:27017"
+    logging:
+      driver: "none"
     healthcheck:
       test: ["CMD-SHELL", "mongosh --quiet --eval \"db.adminCommand('ping').ok\" localhost:27017/test | grep 1"]
       interval: 5s
