@@ -86,7 +86,7 @@ export const TutorDashboardPage = () => {
       <div className="page-heading">
         <div>
           <p className="eyebrow">Il tuo spazio di lavoro</p>
-          <h1>Ciao, {tutor.userId?.name || "tutor"}.</h1>
+          <h1>Ciao, {tutor.userId?.name || "tutor"}</h1>
         </div>
         <div className="dashboard-actions">
           <Link

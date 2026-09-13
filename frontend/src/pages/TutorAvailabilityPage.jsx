@@ -79,13 +79,13 @@ export const TutorAvailabilityPage = () => {
       <div className="page-heading">
         <div>
           <p className="eyebrow">Organizza il tuo tempo</p>
-          <h1>Le tue disponibilità.</h1>
+          <h1>Le tue disponibilità</h1>
         </div>
       </div>
       <section className="panel">
         <h2>{editingId ? "Modifica slot" : "Aggiungi una fascia oraria"}</h2>
         <p className="helper-text">
-          La fascia verrà divisa automaticamente in slot consecutivi da un’ora.
+          La fascia verrà divisa automaticamente in slot consecutivi da un’ora
         </p>
         <form className="inline-form" onSubmit={submit}>
           <label>
@@ -128,7 +128,7 @@ export const TutorAvailabilityPage = () => {
                     dateStyle: "medium",
                     timeStyle: "short",
                   })}{" "}
-                  –{" "}
+                  -{" "}
                   {new Date(slot.endTime).toLocaleTimeString("it-IT", {
                     hour: "2-digit",
                     minute: "2-digit",

@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { normalizeRoles } from "../utils/roles";
 
 export const ProtectedRoute = ({ children, allowedRoles = null }) => {
   const { user, isAuthenticated, loading } = useAuth();
@@ -14,7 +15,7 @@ export const ProtectedRoute = ({ children, allowedRoles = null }) => {
   }
 
   // Check se l'utente è autorizzato in base al ruolo
-  const roles = Array.isArray(user?.role) ? user.role : [user?.role];
+  const roles = normalizeRoles(user);
   if (allowedRoles && !allowedRoles.some((role) => roles.includes(role))) {
     return <Navigate to="/unauthorized" replace />;
   }

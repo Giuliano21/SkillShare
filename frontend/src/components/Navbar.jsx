@@ -1,10 +1,11 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { normalizeRoles } from "../utils/roles";
 
 export const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const roles = Array.isArray(user?.role) ? user.role : [user?.role];
+  const roles = normalizeRoles(user);
   const isTutor = roles.includes("tutor");
 
   const signOut = async () => {

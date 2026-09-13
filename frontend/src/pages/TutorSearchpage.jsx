@@ -4,11 +4,12 @@ import { getAllTutors } from "../api/tutorApi";
 import { createOrGetConversation } from "../api/chatApi";
 import { Filterbar } from "../components/Filterbar";
 import { useAuth } from "../context/AuthContext";
+import { normalizeRoles } from "../utils/roles";
 
 export const TutorSearchpage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const roles = Array.isArray(user?.role) ? user.role : [user?.role];
+  const roles = normalizeRoles(user);
   const [tutors, setTutors] = useState([]);
   const [filters, setFilters] = useState({
     subject: "",
@@ -70,8 +71,8 @@ export const TutorSearchpage = () => {
     <div className="content-page">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">Trova il tuo prossimo punto di vista</p>
-          <h1>Cerca un tutor.</h1>
+          <p className="eyebrow">Trova il tutor che fa per te</p>
+          <h1>Cerca un tutor</h1>
         </div>
         <span className="result-count">{tutors.length} risultati</span>
       </div>

@@ -1,13 +1,7 @@
 const Booking = require("../models/Booking");
 const AvailabilitySlot = require("../models/AvailabilitySlot");
 const Tutor = require("../models/Tutor");
-
-// Funzione per verificare se un utente ha un determinato ruolo
-function hasRole(user, role) {
-  // Controlla se l'utente ha il ruolo specificato, considerando che il ruolo può essere un array o una singola stringa
-  const roles = Array.isArray(user?.role) ? user.role : [user?.role];
-  return roles.includes(role);
-}
+const { hasRole } = require("../middlewares/auth");
 
 async function createBooking(req, res) {
   try {

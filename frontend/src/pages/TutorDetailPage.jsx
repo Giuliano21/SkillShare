@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { createBooking, getMyBookings } from "../api/bookingApi";
@@ -36,33 +36,32 @@ export const TutorDetailPage = () => {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const load = useCallback(async () => {
-    const [tutorData, slotData, reviewData] = await Promise.all([
-      getTutorById(id),
-      getTutorAvailability(id),
-      getReviews(id),
-    ]);
-    setTutor(tutorData.tutor);
-    setSlots(slotData.availabilitySlots || []);
-    setReviews(reviewData.reviews || []);
-    if (user) {
-      const bookingData = await getMyBookings();
-      setCompletedBooking(
-        (bookingData.bookings || []).find(
-          (booking) =>
-            booking.tutorId?._id === id && booking.status === "completed",
-        ),
-      );
-    }
-  }, [id, user]);
-
   useEffect(() => {
-    const timer = setTimeout(
-      () => load().catch((err) => setError(err.message)),
-      0,
-    );
+    const timer = setTimeout(async () => {
+      try {
+        const [tutorData, slotData, reviewData] = await Promise.all([
+          getTutorById(id),
+          getTutorAvailability(id),
+          getReviews(id),
+        ]);
+        setTutor(tutorData.tutor);
+        setSlots(slotData.availabilitySlots || []);
+        setReviews(reviewData.reviews || []);
+        if (user) {
+          const bookingData = await getMyBookings();
+          setCompletedBooking(
+            (bookingData.bookings || []).find(
+              (booking) =>
+                booking.tutorId?._id === id && booking.status === "completed",
+            ),
+          );
+        }
+      } catch (err) {
+        setError(err.message);
+      }
+    }, 0);
     return () => clearTimeout(timer);
-  }, [load]);
+  }, [id, user]);
 
   const toggleSlot = (slotId) => {
     if (selectedSlotIds.includes(slotId)) {
@@ -226,7 +225,7 @@ export const TutorDetailPage = () => {
               slots.map((slot) => (
                 <label className="slot-row slot-choice" key={slot._id}>
                   <span>
-                    {dateTime(slot.startTime)} – {time(slot.endTime)}{" "}
+                    {dateTime(slot.startTime)} - {time(slot.endTime)}{" "}
                     <small>(1 ora)</small>
                   </span>
                   <input

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   cancelBooking,
@@ -7,42 +7,49 @@ import {
 } from "../api/bookingApi";
 import { createOrGetConversation } from "../api/chatApi";
 import { useAuth } from "../context/AuthContext";
+import { normalizeRoles } from "../utils/roles";
+
+const loadBookings = async (isTutor, setBookings) => {
+  const data = await getMyBookings();
+  const nextBookings = data.bookings || [];
+  setBookings(nextBookings);
+  if (!isTutor) {
+    await Promise.all(
+      nextBookings
+        .filter(
+          (booking) =>
+            booking.status === "accepted" && booking.tutorId?.userId?._id,
+        )
+        .map(async (booking) => {
+          try {
+            await createOrGetConversation(booking.tutorId.userId._id);
+          } catch {
+            // La prenotazione resta visibile anche se la chat non è disponibile.
+          }
+        }),
+    );
+  }
+};
 
 export const BookingsPage = () => {
   const { user } = useAuth();
-  const roles = Array.isArray(user?.role) ? user.role : [user?.role];
+  const roles = normalizeRoles(user);
   const isTutor = roles.includes("tutor");
   const [bookings, setBookings] = useState([]);
   const [message, setMessage] = useState("");
 
-  const load = useCallback(async () => {
-    const data = await getMyBookings();
-    const nextBookings = data.bookings || [];
-    setBookings(nextBookings);
-    if (!isTutor) {
-      await Promise.all(
-        nextBookings
-          .filter(
-            (booking) =>
-              booking.status === "accepted" && booking.tutorId?.userId?._id,
-          )
-          .map(async (booking) => {
-            try {
-              await createOrGetConversation(booking.tutorId.userId._id);
-            } catch {
-              // La prenotazione resta visibile anche se la chat non è disponibile.
-            }
-          }),
-      );
-    }
-  }, [isTutor]);
+  const load = async () => {
+    await loadBookings(isTutor, setBookings);
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      load().catch((error) => setMessage(error.message));
+      loadBookings(isTutor, setBookings).catch((error) =>
+        setMessage(error.message),
+      );
     }, 0);
     return () => clearTimeout(timer);
-  }, [load]);
+  }, [isTutor]);
 
   const cancel = async (id) => {
     try {

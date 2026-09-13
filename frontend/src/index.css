@@ -73,7 +73,7 @@
   font-size: clamp(2rem, 4vw, 4rem);
 }
 .home-search-hero .hero-text {
-  max-width: 520px;
+  max-width: 780px;
 }
 .home-search-main {
   padding: 2.5rem 0 4rem;
@@ -652,7 +652,7 @@ textarea:focus-visible {
   margin-bottom: 1.2rem;
 }
 .hero-text {
-  max-width: 440px;
+  max-width: 800px;
   color: var(--muted);
   font-size: 1.05rem;
 }

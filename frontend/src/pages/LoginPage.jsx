@@ -30,13 +30,12 @@ export const LoginPage = () => {
       <div className="auth-aside">
         <p className="eyebrow">Bentornato</p>
         <h1>
-          Il prossimo passo
+          Sei un tutor o 
           <br />
-          <em>parte da qui.</em>
+          <em>sei uno studente?</em>
         </h1>
         <p>
-          Riprendi il filo delle tue lezioni e continua a costruire qualcosa di
-          tuo.
+          Cerca o diventa un tutor
         </p>
       </div>
       <form className="form-card" onSubmit={handleSubmit}>

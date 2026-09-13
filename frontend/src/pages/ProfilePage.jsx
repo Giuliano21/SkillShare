@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { deleteProfile, getProfile, updateProfile } from "../api/userApi";
 import { getMyTutor, updateMyTutor } from "../api/tutorApi";
 import { useAuth } from "../context/AuthContext";
+import { normalizeRoles } from "../utils/roles";
 
 export const ProfilePage = () => {
   const { logout, user } = useAuth();
@@ -27,7 +28,7 @@ export const ProfilePage = () => {
   const [showPasswords, setShowPasswords] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const roles = Array.isArray(user?.role) ? user.role : [user?.role];
+  const roles = normalizeRoles(user);
   const isTutor = roles.includes("tutor");
 
   useEffect(() => {

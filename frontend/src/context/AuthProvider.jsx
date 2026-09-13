@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { http, setAccessToken, getAccessToken } from "../api/http";
 import { refreshToken } from "../api/authApi";
+import { getProfile } from "../api/userApi";
 import { AuthContext } from "./AuthContext";
 
 // AuthProvider è un componente che fornisce il contesto di autenticazione ai componenti figli.
@@ -16,7 +17,7 @@ export const AuthProvider = ({ children }) => {
       try {
         await refreshToken();
 
-        const profile = await http("/users/profile");
+        const profile = await getProfile();
         setUser(profile.user);
       } catch (err) {
         console.error("Nessuna sessione attiva:", err);

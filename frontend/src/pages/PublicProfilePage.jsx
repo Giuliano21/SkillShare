@@ -41,7 +41,7 @@ export const PublicProfilePage = () => {
           {profile.name} {profile.surname}
         </h1>
         <p className="lead">
-          {roles.includes("tutor") ? "Tutor" : "Studente"} · @{profile.username}
+          {roles.includes("tutor") ? "Tutor" : "Studente"} - {profile.username}
         </p>
       </section>
     </div>

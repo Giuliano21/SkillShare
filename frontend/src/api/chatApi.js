@@ -17,8 +17,3 @@ export const sendMessage = (conversationId, data) =>
     method: "POST",
     body: data,
   });
-
-export const markConversationAsRead = (conversationId) =>
-  http(`/chats/conversations/${conversationId}/read`, {
-    method: "PATCH",
-  });

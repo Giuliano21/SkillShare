@@ -95,15 +95,14 @@ export const RegisterPage = () => {
   return (
     <div className="auth-layout register-layout">
       <div className="auth-aside">
-        <p className="eyebrow">La tua prossima skill</p>
+        <p className="eyebrow">Registrati</p>
         <h1>
-          Imparare è un
+          Compila il form ed
           <br />
-          <em>atto sociale.</em>
+          <em>iscriviti a SkillShare </em>
         </h1>
         <p>
-          Entra in una rete di persone che condividono tempo, esperienza e
-          domande.
+          Connettiti con tutor esperti o diventalo tu stesso
         </p>
       </div>
       <form className="form-card" onSubmit={handleSubmit}>
@@ -177,9 +176,10 @@ export const RegisterPage = () => {
         {formData.role === "tutor" && (
           <div className="tutor-fields">
             <label>
-              Materie, separate da virgola
+              Inserisci le materie (separate dalla virgola)
               <input
                 name="subjects"
+                placeholder="Disegno,Matematica,Informatica..."
                 value={formData.subjects}
                 onChange={handleChange}
                 required
@@ -192,6 +192,7 @@ export const RegisterPage = () => {
                   name="hourlyPrice"
                   type="number"
                   min="0"
+                  placeholder="€/h"
                   value={formData.hourlyPrice}
                   onChange={handleChange}
                   required
@@ -221,6 +222,7 @@ export const RegisterPage = () => {
               Racconta qualcosa di te
               <textarea
                 name="bio"
+                placeholder="Ciao mi chiamo ' ' e insegno ' ' "
                 value={formData.bio}
                 onChange={handleChange}
                 required

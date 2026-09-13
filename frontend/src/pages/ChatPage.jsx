@@ -3,7 +3,6 @@ import {
   listMyConversations,
   getConversationMessages,
   sendMessage,
-  markConversationAsRead,
 } from "../api/chatApi";
 import { createChatSocket } from "../api/chatSocket";
 
@@ -49,7 +48,6 @@ export const ChatPage = () => {
     setSelected(conversation);
     const data = await getConversationMessages(id);
     setMessages((data.messages || data.items || []).reverse());
-    await markConversationAsRead(id);
     socketRef.current?.emit("conversation:join", { conversationId: id });
   };
   const submit = async (event) => {
@@ -80,8 +78,8 @@ export const ChatPage = () => {
     <div className="content-page chat-page">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">Confrontati, chiedi, costruisci</p>
-          <h1>Messaggi.</h1>
+          <p className="eyebrow">Chatta e organizza la tua lezione</p>
+          <h1>Messaggi</h1>
         </div>
       </div>
       {error && <p className="form-message error">{error}</p>}
@@ -156,7 +154,7 @@ export const ChatPage = () => {
             </>
           ) : (
             <div className="empty-state">
-              Seleziona una conversazione per iniziare.
+              Seleziona una conversazione per iniziare
             </div>
           )}
         </section>

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Filterbar } from "../components/Filterbar";
 import { getAllTutors } from "../api/tutorApi";
 import { getMyBookings } from "../api/bookingApi";
 import { createOrGetConversation } from "../api/chatApi";
 import { useAuth } from "../context/AuthContext";
+import { normalizeRoles } from "../utils/roles";
 import { TutorDashboardPage } from "./TutorDashboardPage";
 
 const TutorCard = ({ tutor, onChat, canChat }) => (
@@ -52,10 +53,36 @@ const TutorCard = ({ tutor, onChat, canChat }) => (
   </article>
 );
 
+const loadTutors = async (
+  nextFilters,
+  setLoading,
+  setError,
+  setBestTutors,
+  setNewTutors,
+) => {
+  setLoading(true);
+  setError("");
+  const cleaned = Object.fromEntries(
+    Object.entries(nextFilters).filter(([, value]) => value !== ""),
+  );
+  try {
+    const [best, newest] = await Promise.all([
+      getAllTutors({ ...cleaned, sort: "rating" }),
+      getAllTutors({ ...cleaned, sort: "newest" }),
+    ]);
+    setBestTutors((best.tutors || []).slice(0, 3));
+    setNewTutors((newest.tutors || []).slice(0, 3));
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 export const HomePage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const roles = Array.isArray(user?.role) ? user.role : [user?.role];
+  const roles = normalizeRoles(user);
   const isStudent = Boolean(user && roles.includes("student"));
   const [filters, setFilters] = useState({
     subject: "",
@@ -78,33 +105,28 @@ export const HomePage = () => {
     }
   };
 
-  const loadTutors = useCallback(async (nextFilters) => {
-    setLoading(true);
-    setError("");
-    const cleaned = Object.fromEntries(
-      Object.entries(nextFilters).filter(([, value]) => value !== ""),
-    );
-    try {
-      const [best, newest] = await Promise.all([
-        getAllTutors({ ...cleaned, sort: "rating" }),
-        getAllTutors({ ...cleaned, sort: "newest" }),
-      ]);
-      setBestTutors((best.tutors || []).slice(0, 3));
-      setNewTutors((newest.tutors || []).slice(0, 3));
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     if (!isStudent) {
       return undefined;
     }
-    const timer = setTimeout(() => loadTutors({}), 0);
+    const timer = setTimeout(async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const [best, newest] = await Promise.all([
+          getAllTutors({ sort: "rating" }),
+          getAllTutors({ sort: "newest" }),
+        ]);
+        setBestTutors((best.tutors || []).slice(0, 3));
+        setNewTutors((newest.tutors || []).slice(0, 3));
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }, 0);
     return () => clearTimeout(timer);
-  }, [isStudent, loadTutors]);
+  }, [isStudent]);
 
   useEffect(() => {
     if (!isStudent) return undefined;
@@ -135,42 +157,40 @@ export const HomePage = () => {
         <>
           <section className="home-search-hero">
             <div>
-              <p className="eyebrow">SkillShare · Impara da persone reali</p>
-              <h1>Trova il tutor giusto per il tuo prossimo passo.</h1>
+              <p className="eyebrow">SkillShare   </p>
+              <h1>Trova il tutor giusto per i tuoi studi.</h1>
               <p className="hero-text">
-                Confronta esperienza, recensioni e prezzi. Poi scegli quando
-                iniziare.
+                SkillShare è una piattaforma dove studenti e tutor si incontrano. Confronta i tutor per prezzo, materie e modalità di lezione. 
+                Dopo aver prenotato contatta il tutor nella chat disponibile nel sito.
               </p>
             </div>
           </section>
           <section className="home-info">
             <div>
-              <p className="eyebrow">Come funziona</p>
-              <h2>Una scelta più umana per imparare.</h2>
+              <p className="eyebrow">Come funziona SkillShare?</p>
+              <h2>Un modo semplice per trovare l'insegnante giusto per te</h2>
             </div>
             <div className="info-points">
               <article>
                 <strong>01</strong>
                 <h3>Confronta</h3>
                 <p>
-                  Filtra per materia, prezzo e modalità per trovare profili
-                  adatti al tuo obiettivo.
+                  Filtra per materia, prezzo e modalità di lezione per trovare tutor
+                  adatti alle tue esigenze
                 </p>
               </article>
               <article>
                 <strong>02</strong>
                 <h3>Prenota</h3>
                 <p>
-                  Scegli uno o più slot consecutivi e costruisci una lezione
-                  della durata che ti serve.
+                  Scegli uno o più slot consecutivi da 1 ora in modo da personalizzare la tua lezione
                 </p>
               </article>
               <article>
                 <strong>03</strong>
-                <h3>Cresci</h3>
+                <h3>Comunica</h3>
                 <p>
-                  Impara con continuità, parla con il tutor e lascia una
-                  recensione dopo la lezione.
+                  Chatta con il tutor (previa prenotazione accettata) e lascia una recensione al completamento della lezione
                 </p>
               </article>
             </div>
@@ -185,8 +205,8 @@ export const HomePage = () => {
           >
             <div className="section-heading">
               <div>
-                <p className="eyebrow">Il prossimo passo</p>
-                <h2 id="accepted-bookings-title">Prenotazioni accettate.</h2>
+                <p className="eyebrow">Resoconto delle prossime lezioni</p>
+                <h2 id="accepted-bookings-title">Prenotazioni accettate</h2>
               </div>
               <Link className="text-link" to="/bookings">
                 Vedi tutte
@@ -232,7 +252,15 @@ export const HomePage = () => {
               [event.target.name]: event.target.value,
             }))
           }
-          onSearch={() => loadTutors(filters)}
+          onSearch={() =>
+            loadTutors(
+              filters,
+              setLoading,
+              setError,
+              setBestTutors,
+              setNewTutors,
+            )
+          }
         />
         {error && <p className="form-message error">{error}</p>}
         {loading ? (
@@ -244,8 +272,8 @@ export const HomePage = () => {
             <section className="tutor-rail">
               <div className="section-heading">
                 <div>
-                  <p className="eyebrow">Le scelte della community</p>
-                  <h2>Migliori per recensioni.</h2>
+                  <p className="eyebrow">I più votati</p>
+                  <h2>Migliori per recensioni</h2>
                 </div>
                 <span>Top 3</span>
               </div>
@@ -269,8 +297,8 @@ export const HomePage = () => {
             <section className="tutor-rail">
               <div className="section-heading">
                 <div>
-                  <p className="eyebrow">Nuove prospettive</p>
-                  <h2>Tutor appena arrivati.</h2>
+                  <p className="eyebrow">Nuovi tutor</p>
+                  <h2>Tutor appena iscritti</h2>
                 </div>
                 <span>Nuovi</span>
               </div>

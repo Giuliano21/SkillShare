@@ -4,6 +4,7 @@ const Message = require("../models/Messages");
 const User = require("../models/User");
 const Tutor = require("../models/Tutor");
 const Booking = require("../models/Booking");
+const { hasRole } = require("../middlewares/auth");
 
 // Funzione per normalizzare gli ID degli utenti in stringhe
 function normalizeId(value) {
@@ -15,12 +16,6 @@ function buildParticipantsKey(userAId, userBId) {
   const ids = [normalizeId(userAId), normalizeId(userBId)].sort();
   // Restituisce coppia ordinata di ID
   return `${ids[0]}:${ids[1]}`;
-}
-
-// Funzione per verificare se un utente ha un determinato ruolo
-function hasRole(userDoc, role) {
-  const roles = Array.isArray(userDoc?.role) ? userDoc.role : [userDoc?.role];
-  return roles.includes(role);
 }
 
 // Funzione per risolvere la coppia tutor-studente tra due utenti
@@ -234,30 +229,11 @@ async function createMessage(conversationId, senderId, text) {
   );
 }
 
-// Funzione per segnare tutti i messaggi di una conversazione come letti da un utente specifico
-async function markConversationAsRead(conversationId, readerId) {
-  const result = await Message.updateMany(
-    {
-      conversationId,
-      // Filtra i messaggi che non sono stati inviati dal lettore e che non sono già stati letti
-      senderId: { $ne: readerId },
-      isRead: false,
-    },
-    {
-      $set: { isRead: true },
-    },
-  );
-  // Restituisce il numero di messaggi aggiornati (se presenti) o 0 se nessun messaggio è stato aggiornato
-  return result.modifiedCount || 0;
-}
-
 module.exports = {
-  buildParticipantsKey,
   hasAcceptedBookingBetweenUsers,
   createOrGetConversationByUsers,
   ensureConversationMembership,
   listConversationsForUser,
   listMessages,
   createMessage,
-  markConversationAsRead,
 };

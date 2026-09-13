@@ -70,12 +70,8 @@ async function verifyToken(req, res, next) {
 // Funzione middleware per limitare l'accesso a determinate rotte in base ai ruoli degli utenti
 function restrictTo(roles) {
   return (req, res, next) => {
-    const userRoles = Array.isArray(req.user.role)
-      ? req.user.role
-      : [req.user.role];
-
     // Controlla se il ruolo dell'utente è incluso nell'array dei ruoli consentiti
-    if (!userRoles.some((role) => roles.includes(role))) {
+    if (!hasRole(req.user, roles)) {
       // Se il ruolo dell'utente non è autorizzato, restituisce un errore 403 Forbidden
       return res.status(403).json({
         status: "fail",
@@ -86,9 +82,16 @@ function restrictTo(roles) {
   };
 }
 
+function hasRole(user, roles) {
+  const userRoles = Array.isArray(user?.role) ? user.role : [user?.role];
+  const allowedRoles = Array.isArray(roles) ? roles : [roles];
+  return userRoles.some((role) => allowedRoles.includes(role));
+}
+
 module.exports = {
   verifyToken,
   restrictTo,
+  hasRole,
   extractTokenFromRequest,
   getUserFromAccessToken,
 };
