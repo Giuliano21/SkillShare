@@ -107,6 +107,25 @@ backend/
 }
 ```
 
+### Rate Limiting
+
+Il backend applica il rate limiting tramite `express-rate-limit`. I limiti sono
+calcolati su una finestra mobile di 15 minuti e utilizzano gli header standard
+di rate limiting (`standardHeaders: draft-8`); gli header legacy sono disabilitati.
+
+| Limiter | Ambito | Limite | Risposta oltre il limite |
+|---------|--------|--------|---------------------------|
+| `apiLimiter` | Tutte le richieste API, per indirizzo IP | 150 richieste / 15 minuti | `429` - Troppe richieste. Riprova più tardi. |
+| `authIpLimiter` | Login, per indirizzo IP | 20 richieste / 15 minuti | `429` - Troppi tentativi di autenticazione. Riprova più tardi. |
+| `authAccountLimiter` | Login, per email normalizzata | 10 richieste / 15 minuti | `429` - Troppi tentativi per questo account. Riprova più tardi. |
+| `registerLimiter` | Registrazione, per indirizzo IP | 5 richieste / 15 minuti | `429` - Troppe registrazioni dallo stesso indirizzo. Riprova più tardi. |
+
+Il limite globale viene applicato prima delle route API. Le richieste di login
+sono soggette sia al limite per IP sia al limite per account; il limite che
+viene raggiunto per primo blocca la richiesta. In caso di superamento, il
+backend restituisce un payload JSON con `status: "429"` e un messaggio
+descrittivo.
+
 ## Entità Principali
 
 ### User (Utente)
@@ -142,7 +161,6 @@ backend/
 
 ### Message (Messaggio)
 - Testo max 1000 caratteri
-- Read receipt: `isRead` (default false)
 - Ordinabile per createdAt
 
 ## API REST Principali
@@ -154,7 +172,7 @@ backend/
 | POST | `/api/v1/auth/register` | Registra utente | No |
 | POST | `/api/v1/auth/login` | Login | No |
 | POST | `/api/v1/auth/refresh` | Rinnova access token | No |
-| POST | `/api/v1/auth/logout` | Logout | Sì |
+| POST | `/api/v1/auth/logout` | Logout e cancellazione refresh cookie | No |
 
 ### Profilo Utente
 
@@ -163,16 +181,20 @@ backend/
 | GET | `/api/v1/users/profile` | Ottieni profilo | Sì |
 | PUT | `/api/v1/users/profile` | Aggiorna profilo | Sì |
 | DELETE | `/api/v1/users/profile` | Cancella profilo | Sì |
+| GET | `/api/v1/users/:id` | Ottieni profilo pubblico | Sì |
 
 ### Tutor
 
 | Metodo | Endpoint | Descrizione | Auth | Ruolo |
 |--------|----------|-------------|------|-------|
-| GET | `/api/v1/tutors` | Cerca tutor (filtri: subject, price, rating) | No | - |
-| GET | `/api/v1/tutors/:id` | Dettagli tutor | No | - |
-| GET | `/api/v1/tutors/:id/availability` | Slot disponibilità | No | - |
+| GET | `/api/v1/tutors` | Cerca tutor per i filtri: subject, price, rating, lessonMode| No | - |
+| GET | `/api/v1/tutors/:id` | Dettagli tutor | Sì | student |
+| GET | `/api/v1/tutors/:id/availability` | Slot disponibilità | Sì | student/tutor |
 | POST | `/api/v1/tutors/:id/availability` | Aggiungi slot | Sì | tutor |
 | PUT | `/api/v1/tutors/:id/availability` | Aggiorna slot | Sì | tutor |
+| DELETE | `/api/v1/tutors/availability/:id` | Elimina slot | Sì | tutor |
+| GET | `/api/v1/tutors/me` | Ottieni il mio profilo tutor | Sì | tutor |
+| PUT | `/api/v1/tutors/me` | Aggiorna il mio profilo tutor | Sì | tutor |
 
 ### Prenotazioni
 
@@ -188,6 +210,7 @@ backend/
 | Metodo | Endpoint | Descrizione | Auth | Ruolo |
 |--------|----------|-------------|------|-------|
 | GET | `/api/v1/reviews/:tutorId` | Leggi recensioni tutor | No | - |
+| GET | `/api/v1/reviews/me` | Lista le mie recensioni | Sì | student |
 | POST | `/api/v1/reviews` | Crea recensione | Sì | student |
 | PUT | `/api/v1/reviews/:id` | Aggiorna recensione | Sì | student |
 | DELETE | `/api/v1/reviews/:id` | Elimina recensione | Sì | student |
@@ -200,7 +223,6 @@ backend/
 | POST | `/api/v1/chats/conversations/with/:peerUserId` | Apri/crea chat con peer | Sì | Richiede booking accepted |
 | GET | `/api/v1/chats/conversations/:conversationId/messages` | Storico messaggi (paginato) | Sì | 30 msg/pagina default |
 | POST | `/api/v1/chats/conversations/:conversationId/messages` | Invia messaggio | Sì | Max 1000 caratteri |
-| PATCH | `/api/v1/chats/conversations/:conversationId/read` | Segna come letti | Sì | Messaggi ricevuti |
 
 ### Health Check
 
@@ -229,9 +251,6 @@ socket.emit('message:send', {
   text: "...",
   clientMessageId: "..." // opzionale, per dedup client-side
 }, callback)
-
-// Segna messaggi come letti
-socket.emit('message:read', { conversationId: "..." }, callback)
 ```
 
 ### Eventi Socket Ricevuti dal Client
@@ -242,10 +261,6 @@ socket.on('message:new', (payload) => {
   // payload: { conversationId, message, clientMessageId }
 })
 
-// Conferma messaggi come letti
-socket.on('message:read', (payload) => {
-  // payload: { conversationId, readerId, updatedCount }
-})
 ```
 
 ### Room Structure
@@ -262,7 +277,7 @@ socket.on('message:read', (payload) => {
 ## Variabili Ambiente (.env)
 
 ```env
-PORT=3000
+PORT=4000
 
 # MongoDB
 MONGODB_URI=mongodb://localhost:27017/skillshare

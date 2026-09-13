@@ -10,7 +10,7 @@ const swaggerDefinition = {
   },
   servers: [
     {
-      url: "http://localhost:3000",
+      url: "http://localhost:4000",
       description: "Server locale di sviluppo",
     },
   ],
@@ -582,6 +582,38 @@ const swaggerDefinition = {
         },
       },
     },
+    "/api/v1/users/{id}": {
+      get: {
+        tags: ["Users"],
+        summary: "Recupera il profilo pubblico di un utente",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: {
+            description: "Profilo pubblico recuperato",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    user: { $ref: "#/components/schemas/User" },
+                  },
+                },
+              },
+            },
+          },
+          401: { $ref: "#/components/responses/Unauthorized" },
+          404: { $ref: "#/components/responses/NotFound" },
+        },
+      },
+    },
     "/api/v1/tutors": {
       get: {
         tags: ["Tutors"],
@@ -622,7 +654,7 @@ const swaggerDefinition = {
             in: "query",
             schema: {
               type: "string",
-              enum: ["subject", "price", "rating", "lessonMode"],
+              enum: ["subject", "price", "rating", "lessonMode", "newest"],
             },
             description: "Campo di ordinamento",
           },
@@ -648,10 +680,66 @@ const swaggerDefinition = {
         },
       },
     },
+    "/api/v1/tutors/me": {
+      get: {
+        tags: ["Tutors"],
+        summary: "Recupera il profilo tutor dell'utente autenticato",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: {
+            description: "Profilo tutor recuperato",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    tutor: { $ref: "#/components/schemas/Tutor" },
+                  },
+                },
+              },
+            },
+          },
+          401: { $ref: "#/components/responses/Unauthorized" },
+          403: { $ref: "#/components/responses/Forbidden" },
+          404: { $ref: "#/components/responses/NotFound" },
+        },
+      },
+      put: {
+        tags: ["Tutors"],
+        summary: "Aggiorna il profilo tutor dell'utente autenticato",
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  subjects: { type: "array", items: { type: "string" } },
+                  hourlyPrice: { type: "number" },
+                  bio: { type: "string" },
+                  lessonMode: {
+                    type: "array",
+                    items: { type: "string", enum: ["remote", "presence"] },
+                  },
+                },
+              },
+            },
+          },
+        },
+        responses: {
+          200: { description: "Profilo tutor aggiornato" },
+          401: { $ref: "#/components/responses/Unauthorized" },
+          403: { $ref: "#/components/responses/Forbidden" },
+          404: { $ref: "#/components/responses/NotFound" },
+        },
+      },
+    },
     "/api/v1/tutors/{id}": {
       get: {
         tags: ["Tutors"],
         summary: "Recupera un tutor specifico",
+        security: [{ bearerAuth: [] }],
         parameters: [
           {
             name: "id",
@@ -673,6 +761,8 @@ const swaggerDefinition = {
             },
           },
           404: { $ref: "#/components/responses/NotFound" },
+          401: { $ref: "#/components/responses/Unauthorized" },
+          403: { $ref: "#/components/responses/Forbidden" },
         },
       },
     },
@@ -680,6 +770,7 @@ const swaggerDefinition = {
       get: {
         tags: ["Tutors"],
         summary: "Recupera disponibilità del tutor",
+        security: [{ bearerAuth: [] }],
         parameters: [
           {
             name: "id",
@@ -706,6 +797,8 @@ const swaggerDefinition = {
               },
             },
           },
+          401: { $ref: "#/components/responses/Unauthorized" },
+          403: { $ref: "#/components/responses/Forbidden" },
         },
       },
       post: {
@@ -787,6 +880,27 @@ const swaggerDefinition = {
         },
         responses: {
           200: { description: "Disponibilità aggiornata" },
+          401: { $ref: "#/components/responses/Unauthorized" },
+          403: { $ref: "#/components/responses/Forbidden" },
+          404: { $ref: "#/components/responses/NotFound" },
+        },
+      },
+    },
+    "/api/v1/tutors/availability/{id}": {
+      delete: {
+        tags: ["Tutors"],
+        summary: "Elimina una disponibilità del tutor",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+          },
+        ],
+        responses: {
+          200: { description: "Disponibilità eliminata" },
           401: { $ref: "#/components/responses/Unauthorized" },
           403: { $ref: "#/components/responses/Forbidden" },
           404: { $ref: "#/components/responses/NotFound" },
@@ -956,6 +1070,33 @@ const swaggerDefinition = {
               },
             },
           },
+        },
+      },
+    },
+    "/api/v1/reviews/me": {
+      get: {
+        tags: ["Reviews"],
+        summary: "Recupera le recensioni dell'utente autenticato",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          200: {
+            description: "Recensioni personali recuperate",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    reviews: {
+                      type: "array",
+                      items: { $ref: "#/components/schemas/Review" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          401: { $ref: "#/components/responses/Unauthorized" },
+          403: { $ref: "#/components/responses/Forbidden" },
         },
       },
     },
