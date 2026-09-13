@@ -12,12 +12,7 @@ const TutorController = require("../controllers/tutorController");
 const auth = require("../middlewares/auth");
 
 // Ricerca dei tutor in base a criteri specifici (ad esempio, materia, disponibilità, ecc.)
-router.get(
-  "/",
-  auth.verifyToken,
-  auth.restrictTo(["student"]),
-  TutorController.getAllTutors,
-);
+router.get("/", TutorController.getAllTutors);
 router.get(
   "/me",
   auth.verifyToken,

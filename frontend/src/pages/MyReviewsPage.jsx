@@ -48,7 +48,7 @@ export const MyReviewsPage = () => {
     <div className="content-page narrow-page">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">La tua voce</p>
+          <p className="eyebrow">Valuta la lezione</p>
           <h1>Le mie recensioni.</h1>
         </div>
         <span className="result-count">{reviews.length} recensioni</span>

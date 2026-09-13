@@ -106,9 +106,6 @@ export const HomePage = () => {
   };
 
   useEffect(() => {
-    if (!isStudent) {
-      return undefined;
-    }
     const timer = setTimeout(async () => {
       setLoading(true);
       setError("");
@@ -126,7 +123,7 @@ export const HomePage = () => {
       }
     }, 0);
     return () => clearTimeout(timer);
-  }, [isStudent]);
+  }, []);
 
   useEffect(() => {
     if (!isStudent) return undefined;
@@ -157,11 +154,13 @@ export const HomePage = () => {
         <>
           <section className="home-search-hero">
             <div>
-              <p className="eyebrow">SkillShare   </p>
+              <p className="eyebrow">SkillShare </p>
               <h1>Trova il tutor giusto per i tuoi studi.</h1>
               <p className="hero-text">
-                SkillShare è una piattaforma dove studenti e tutor si incontrano. Confronta i tutor per prezzo, materie e modalità di lezione. 
-                Dopo aver prenotato contatta il tutor nella chat disponibile nel sito.
+                SkillShare è una piattaforma dove studenti e tutor si
+                incontrano. Confronta i tutor per prezzo, materie e modalità di
+                lezione. Dopo aver prenotato contatta il tutor nella chat
+                disponibile nel sito.
               </p>
             </div>
           </section>
@@ -175,22 +174,24 @@ export const HomePage = () => {
                 <strong>01</strong>
                 <h3>Confronta</h3>
                 <p>
-                  Filtra per materia, prezzo e modalità di lezione per trovare tutor
-                  adatti alle tue esigenze
+                  Filtra per materia, prezzo e modalità di lezione per trovare
+                  tutor adatti alle tue esigenze
                 </p>
               </article>
               <article>
                 <strong>02</strong>
                 <h3>Prenota</h3>
                 <p>
-                  Scegli uno o più slot consecutivi da 1 ora in modo da personalizzare la tua lezione
+                  Scegli uno o più slot consecutivi da 1 ora in modo da
+                  personalizzare la tua lezione
                 </p>
               </article>
               <article>
                 <strong>03</strong>
                 <h3>Comunica</h3>
                 <p>
-                  Chatta con il tutor (previa prenotazione accettata) e lascia una recensione al completamento della lezione
+                  Chatta con il tutor (previa prenotazione accettata) e lascia
+                  una recensione al completamento della lezione
                 </p>
               </article>
             </div>
