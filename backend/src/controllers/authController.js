@@ -4,6 +4,19 @@ const tokenService = require("../services/tokenServices");
 const User = require("../models/User");
 const Tutor = require("../models/Tutor");
 
+const isProduction = process.env.NODE_ENV === "production";
+const cookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "strict",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+const clearCookieOptions = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "strict",
+};
+
 async function register(req, res) {
   try {
     // Estrae i dati dell'utente dalla richiesta
@@ -95,12 +108,7 @@ async function login(req, res) {
   user.refreshTokenHash = tokenService.hashRefreshToken(refreshToken); // Aggiunge al db l'hash del refresh token per la verifica futura
   await user.save();
 
-  res.cookie("refreshToken", refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // Imposta il cookie come sicuro solo in produzione
-    sameSite: "strict", // Previene attacchi CSRF
-    maxAge: 7 * 24 * 60 * 60 * 1000, // Imposta la durata del cookie a 7 giorni
-  });
+  res.cookie("refreshToken", refreshToken, cookieOptions);
   // Restituisce l'access token al client
   res.json({
     accessToken,
@@ -146,7 +154,7 @@ async function refresh(req, res) {
 
     const refreshTokenHash = tokenService.hashRefreshToken(refreshToken);
     if (!user.refreshTokenHash || user.refreshTokenHash !== refreshTokenHash) {
-      res.clearCookie("refreshToken");
+      res.clearCookie("refreshToken", clearCookieOptions);
       return res.status(401).json({
         message:
           "Refresh token revocato o già utilizzato. Effettua nuovamente il login.",
@@ -162,18 +170,13 @@ async function refresh(req, res) {
       { new: true },
     );
     if (!updatedUser) {
-      res.clearCookie("refreshToken");
+      res.clearCookie("refreshToken", clearCookieOptions);
       return res.status(401).json({
         message: "Refresh token già utilizzato. Effettua nuovamente il login.",
       });
     }
 
-    res.cookie("refreshToken", rotatedRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    res.cookie("refreshToken", rotatedRefreshToken, cookieOptions);
     const newAccessToken = tokenService.generateAccessToken(user);
     return res.json({ accessToken: newAccessToken });
   } catch (error) {
@@ -198,11 +201,7 @@ async function logout(req, res) {
       // Il cookie viene comunque cancellato anche se è già scaduto o non valido.
     }
   }
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // Imposta il cookie come sicuro solo in produzione
-    sameSite: "strict", // Previene attacchi CSRF
-  });
+  res.clearCookie("refreshToken", clearCookieOptions);
   res.json({ message: "Logout effettuato con successo." });
 }
 
