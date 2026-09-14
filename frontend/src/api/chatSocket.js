@@ -1,11 +1,9 @@
 import { io } from "socket.io-client";
 import { getAccessToken } from "./http";
 
-const SOCKET_URL = (
+const SOCKET_URL = 
   import.meta.env.VITE_SOCKET_URL ||
-  import.meta.env.VITE_API_URL ||
-  "http://localhost:4000/api/v1"
-).replace(/\/api\/v1\/?$/, "");
+  window.location.origin;
 
 export const createChatSocket = () =>
   io(SOCKET_URL, {

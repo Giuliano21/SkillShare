@@ -13,6 +13,7 @@ const cookieParser = require("cookie-parser");
 const chatSocketAuth = require("./middlewares/chatSocketAuth");
 const { registerChatSocket } = require("./sockets/chatSocket");
 const { apiLimiter } = require("./middlewares/rateLimiters");
+const path= require('path');
 // Prendo i dati dalle variabili d'ambiente definite nel file .env
 require("dotenv").config();
 const PORT = process.env.PORT || 4000;
@@ -42,6 +43,15 @@ app.use(apiLimiter);
 // Importo index.js per gestire le rotte principali dell'API
 const apiRoutes = require("./routes/index");
 app.use("/api/v1", apiRoutes);
+
+// Gestisco le richieste per il frontend, servendo i file statici dalla cartella "frontend/dist" e restituendo il file index.html per tutte le rotte non gestite dall'API. Questo permette di gestire il routing lato client con framework come React o Vue.js.
+const frontendPath = path.join(__dirname, "../../frontend/dist");
+
+app.use(express.static(frontendPath));
+
+app.get(/.*/, (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
+});
 
 // Configuro la documentazione dell'API utilizzando Swagger
 const swaggerUi = require("swagger-ui-express"); // Importo il modulo swagger-ui-express per la documentazione dell'API
