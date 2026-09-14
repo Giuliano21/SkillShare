@@ -325,17 +325,7 @@ npm run seed:clean
 Elimina tutti gli utenti e tutor, poi puoi eseguire nuovamente `npm run seed`.
 
 ### Tutor di Esempio
-Lo script crea automaticamente:
-- Marco Rossi - Matematica, Fisica (€25/h, remoto)
-- Giulia Bianchi - Inglese, Francese (€20/h, remoto)
-- Andrea Verdi - Italiano, Letteratura (€18/h, in presenza)
-- Francesca Neri - Chimica, Biologia (€22/h, in presenza)
-- Luca Ferrari - Matematica, Informatica (€28/h, remoto)
-- Elena Gallo - Spagnolo, Italiano (€19/h, remoto)
-- Roberto Moretti - Diritto, Economia (€24/h, in presenza)
-- Martina Colombo - Arte, Storia (€17/h, in presenza)
-- Paolo Rizzo - Tedesco, Inglese (€21/h, remoto)
-- Alessandra Conti - Fisica, Scienze (€23/h, remoto)
+
 
 **Credenziali di esempio**: Password universale `password123` per tutti i tutor creati.
 
