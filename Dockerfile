@@ -1,4 +1,4 @@
-FROM node:22-alpine AS frontend-build
+FROM node:22-slim AS frontend-build
 
 WORKDIR /app/frontend
 
@@ -11,7 +11,7 @@ ENV VITE_SOCKET_URL=
 RUN npm run build
 
 
-FROM node:22-alpine
+FROM node:22-slim
 
 WORKDIR /app/backend
 
