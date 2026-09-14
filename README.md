@@ -143,3 +143,12 @@ La documentazione completa degli endpoint e disponibile tramite Swagger all'indi
 - [README del frontend](frontend/README.md)
 - Diagrammi UML nella directory `docs/UML/`
 - Documentazione Swagger `http://localhost:4000/api-docs`
+
+## Credenziali per account tutor e studente di prova
+### Tutor  
+- email: professore@email.com
+- password: password123
+### Studente
+- email: studente@email.com
+- password: password123
+
