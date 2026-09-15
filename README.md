@@ -152,3 +152,5 @@ La documentazione completa degli endpoint e disponibile tramite Swagger all'indi
 - email: studente@email.com
 - password: password123
 
+### Deploy su render all'indirizzo: https://skillshare-pd3e.onrender.com/
+
